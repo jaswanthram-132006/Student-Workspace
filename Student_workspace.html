@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Study Hub</title>
+  <style>
+    :root {
+      --primary: #4f46e5;
+      --primary-hover: #4338ca;
+      --primary-light: #eef2ff;
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --border: #e2e8f0;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --danger: #ef4444;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+      --radius: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      padding: 2rem 1.5rem;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .header-title h1 {
+      font-size: 1.85rem;
+      font-weight: 800;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .header-title p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-top: 4px;
+    }
+
+    .quote-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 0.6rem 1rem;
+      border-radius: 12px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      max-width: 380px;
+      font-style: italic;
+    }
+
+    /* Dashboard Layout */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 1.5rem;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      box-shadow: var(--card-shadow);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* Column spans */
+    .col-4 { grid-column: span 4; }
+    .col-6 { grid-column: span 6; }
+    .col-8 { grid-column: span 8; }
+    .col-12 { grid-column: span 12; }
+
+    @media (max-width: 960px) {
+      .col-4, .col-6, .col-8 { grid-column: span 12; }
+    }
+
+    /* Widget 1: Pomodoro */
+    .timer-modes {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      background: var(--bg);
+      padding: 4px;
+      border-radius: 10px;
+    }
+
+    .timer-mode-btn {
+      flex: 1;
+      padding: 6px;
+      border: none;
+      background: transparent;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .timer-mode-btn.active {
+      background: var(--surface);
+      color: var(--primary);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .timer-display {
+      font-size: 3.5rem;
+      font-weight: 800;
+      text-align: center;
+      margin: 1rem 0;
+      font-variant-numeric: tabular-nums;
+      color: var(--text);
+    }
+
+    .timer-controls {
+      display: flex;
+      gap: 0.75rem;
+      justify-content: center;
+    }
+
+    .btn {
+      padding: 0.6rem 1.2rem;
+      border-radius: 10px;
+      border: none;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-secondary { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
+    .btn-secondary:hover { background: var(--border); }
+    .btn-danger-light { background: #fee2e2; color: var(--danger); }
+    .btn-danger-light:hover { background: #fecaca; }
+
+    /* Widget 2: Tasks */
+    .task-form {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .input-field {
+      padding: 0.6rem 0.8rem;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 0.9rem;
+      outline: none;
+      background: var(--bg);
+      flex: 1;
+      min-width: 140px;
+    }
+
+    .input-field:focus {
+      border-color: var(--primary);
+      background: var(--surface);
+    }
+
+    .task-list {
+      list-style: none;
+      overflow-y: auto;
+      max-height: 250px;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .task-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.6rem 0.8rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 0.9rem;
+    }
+
+    .task-left {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .task-item.completed span {
+      text-decoration: line-through;
+      color: var(--text-muted);
+    }
+
+    .tag {
+      font-size: 0.75rem;
+      padding: 2px 6px;
+      border-radius: 6px;
+      font-weight: 600;
+      background: var(--primary-light);
+      color: var(--primary);
+    }
+
+    /* Widget 3: Quick Scratchpad / Notes */
+    .notes-area {
+      width: 100%;
+      height: 220px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.8rem;
+      font-size: 0.95rem;
+      resize: none;
+      outline: none;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    .notes-area:focus {
+      border-color: var(--primary);
+      background: var(--surface);
+    }
+
+    /* Widget 4: GPA Calculator */
+    .gpa-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .gpa-row {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .gpa-result-box {
+      margin-top: auto;
+      background: var(--primary-light);
+      border: 1px solid rgba(79, 70, 229, 0.2);
+      border-radius: 10px;
+      padding: 0.8rem;
+      text-align: center;
+    }
+
+    .gpa-val {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: var(--primary);
+    }
+
+    /* Widget 5: Focus Sounds */
+    .sound-buttons {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.75rem;
+    }
+
+    .sound-card {
+      border: 1px solid var(--border);
+      background: var(--bg);
+      border-radius: 12px;
+      padding: 0.8rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .sound-card.playing {
+      border-color: var(--primary);
+      background: var(--primary-light);
+    }
+
+    .sound-card span {
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    
+    <!-- Header -->
+    <header>
+      <div class="header-title">
+        <h1>🎓 Student Workspace</h1>
+        <p id="current-date">Organize assignments, track focus cycles, and calculate grades.</p>
+      </div>
+      <div class="quote-box">
+        "Small daily disciplines compound into massive academic results."
+      </div>
+    </header>
+
+    <!-- Dashboard Content -->
+    <div class="dashboard-grid">
+
+      <!-- 1. Pomodoro Focus Timer -->
+      <div class="card col-4">
+        <div class="card-title">
+          <span>⏱️ Focus Timer</span>
+          <span id="cycle-count" style="font-size: 0.8rem; color: var(--text-muted);">Cycle #1</span>
+        </div>
+        <div class="timer-modes">
+          <button class="timer-mode-btn active" data-time="1500">Study (25m)</button>
+          <button class="timer-mode-btn" data-time="300">Break (5m)</button>
+          <button class="timer-mode-btn" data-time="900">Long (15m)</button>
+        </div>
+        <div class="timer-display" id="timer-display">25:00</div>
+        <div class="timer-controls">
+          <button class="btn btn-primary" id="timer-start">Start</button>
+          <button class="btn btn-secondary" id="timer-reset">Reset</button>
+        </div>
+      </div>
+
+      <!-- 2. Assignment & Task Tracker -->
+      <div class="card col-8">
+        <div class="card-title">
+          <span>📝 Assignment & Exam Tracker</span>
+          <span id="task-stats" style="font-size: 0.8rem; color: var(--text-muted);">0 Tasks</span>
+        </div>
+        <form class="task-form" id="task-form">
+          <input type="text" id="task-title" class="input-field" placeholder="Task or assignment title..." required>
+          <input type="text" id="task-tag" class="input-field" style="max-width: 130px;" placeholder="Subject (e.g. Math)">
+          <input type="date" id="task-date" class="input-field" style="max-width: 160px;">
+          <button type="submit" class="btn btn-primary">+ Add</button>
+        </form>
+        <ul class="task-list" id="task-list"></ul>
+      </div>
+
+      <!-- 3. Scratchpad / Quick Notes -->
+      <div class="card col-4">
+        <div class="card-title">
+          <span>📋 Scratchpad & Notes</span>
+          <span id="note-word-count" style="font-size: 0.8rem; color: var(--text-muted);">0 words</span>
+        </div>
+        <textarea id="notes" class="notes-area" placeholder="Jot down quick lecture formulas, references, or reminder keys..."></textarea>
+      </div>
+
+      <!-- 4. Quick GPA Target Calculator -->
+      <div class="card col-4">
+        <div class="card-title">
+          <span>📊 GPA Calculator</span>
+          <button class="btn btn-secondary" id="add-course-btn" style="padding: 2px 8px; font-size: 0.75rem;">+ Course</button>
+        </div>
+        <div class="gpa-grid" id="gpa-rows">
+          <div class="gpa-row">
+            <input type="text" class="input-field" placeholder="Course" value="Course 1">
+            <select class="input-field gpa-grade" style="max-width: 90px;">
+              <option value="4.0">A (4.0)</option>
+              <option value="3.7">A- (3.7)</option>
+              <option value="3.3">B+ (3.3)</option>
+              <option value="3.0">B (3.0)</option>
+              <option value="2.7">B- (2.7)</option>
+              <option value="2.0">C (2.0)</option>
+            </select>
+            <input type="number" class="input-field gpa-credits" placeholder="Credits" value="3" min="1" max="6" style="max-width: 75px;">
+          </div>
+        </div>
+        <div class="gpa-result-box">
+          <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">ESTIMATED GPA</div>
+          <div class="gpa-val" id="gpa-display">4.00</div>
+        </div>
+      </div>
+
+      <!-- 5. Offline Ambient Study Generator -->
+      <div class="card col-4">
+        <div class="card-title">
+          <span>🎧 Ambient Study Generator</span>
+        </div>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+          Synthesized offline focus noise to block room distractions.
+        </p>
+        <div class="sound-buttons">
+          <div class="sound-card" id="sound-rain">
+            <span>🌧️ Soft Rain</span>
+            <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.75rem;">Play</button>
+          </div>
+          <div class="sound-card" id="sound-pink">
+            <span>📻 Pink Noise</span>
+            <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.75rem;">Play</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    /* Date Formatting */
+    const dateOpts = { weekday: 'long', month: 'short', day: 'numeric' };
+    document.getElementById('current-date').textContent = `Today is ${new Date().toLocaleDateString(undefined, dateOpts)}`;
+
+    /* Audio Context Generator for Timer Chimes & Ambient Audio */
+    let audioCtx = null;
+    function getAudioContext() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      return audioCtx;
+    }
+
+    function playDing() {
+      const ctx = getAudioContext();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+      osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.1); // A5
+      gain.gain.setValueAtTime(0.3, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.8);
+    }
+
+    /* 1. Pomodoro Logic */
+    let timerDuration = 1500;
+    let timerRemaining = 1500;
+    let timerInterval = null;
+    let isTimerRunning = false;
+    let completedCycles = 0;
+
+    const timerDisplay = document.getElementById('timer-display');
+    const timerStartBtn = document.getElementById('timer-start');
+    const timerResetBtn = document.getElementById('timer-reset');
+    const modeBtns = document.querySelectorAll('.timer-mode-btn');
+
+    function updateTimerDisplay() {
+      const mins = String(Math.floor(timerRemaining / 60)).padStart(2, '0');
+      const secs = String(timerRemaining % 60).padStart(2, '0');
+      timerDisplay.textContent = `${mins}:${secs}`;
+    }
+
+    function startTimer() {
+      if (isTimerRunning) {
+        clearInterval(timerInterval);
+        timerStartBtn.textContent = 'Start';
+        isTimerRunning = false;
+        return;
+      }
+
+      getAudioContext(); // Resume audio on user action
+      isTimerRunning = true;
+      timerStartBtn.textContent = 'Pause';
+
+      timerInterval = setInterval(() => {
+        timerRemaining--;
+        updateTimerDisplay();
+
+        if (timerRemaining <= 0) {
+          clearInterval(timerInterval);
+          isTimerRunning = false;
+          timerStartBtn.textContent = 'Start';
+          playDing();
+          completedCycles++;
+          document.getElementById('cycle-count').textContent = `Cycle #${completedCycles + 1}`;
+          alert('Focus session complete! Time for a break.');
+          timerRemaining = timerDuration;
+          updateTimerDisplay();
+        }
+      }, 1000);
+    }
+
+    function resetTimer() {
+      clearInterval(timerInterval);
+      isTimerRunning = false;
+      timerStartBtn.textContent = 'Start';
+      timerRemaining = timerDuration;
+      updateTimerDisplay();
+    }
+
+    modeBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        modeBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        timerDuration = parseInt(btn.dataset.time);
+        resetTimer();
+      });
+    });
+
+    timerStartBtn.addEventListener('click', startTimer);
+    timerResetBtn.addEventListener('click', resetTimer);
+
+    /* 2. Tasks Logic */
+    let tasks = JSON.parse(localStorage.getItem('student_tasks') || '[]');
+    const taskForm = document.getElementById('task-form');
+    const taskList = document.getElementById('task-list');
+
+    function saveTasks() {
+      localStorage.setItem('student_tasks', JSON.stringify(tasks));
+      renderTasks();
+    }
+
+    function renderTasks() {
+      taskList.innerHTML = '';
+      const pendingCount = tasks.filter(t => !t.completed).length;
+      document.getElementById('task-stats').textContent = `${pendingCount} Pending`;
+
+      tasks.forEach((task, idx) => {
+        const li = document.createElement('li');
+        li.className = `task-item ${task.completed ? 'completed' : ''}`;
+        li.innerHTML = `
+          <div class="task-left">
+            <input type="checkbox" ${task.completed ? 'checked' : ''} data-id="${idx}">
+            <span>${task.title}</span>
+            ${task.tag ? `<span class="tag">${task.tag}</span>` : ''}
+            ${task.date ? `<small style="color:var(--text-muted);font-size:0.75rem;">📅 ${task.date}</small>` : ''}
+          </div>
+          <button class="btn btn-danger-light" style="padding: 2px 6px; font-size: 0.75rem;" data-del="${idx}">✕</button>
+        `;
+        taskList.appendChild(li);
+      });
+    }
+
+    taskForm.addEventListener('submit', e => {
+      e.preventDefault();
+      const title = document.getElementById('task-title').value.trim();
+      const tag = document.getElementById('task-tag').value.trim();
+      const date = document.getElementById('task-date').value;
+
+      if (!title) return;
+      tasks.push({ title, tag, date, completed: false });
+      taskForm.reset();
+      saveTasks();
+    });
+
+    taskList.addEventListener('click', e => {
+      if (e.target.dataset.id !== undefined) {
+        tasks[e.target.dataset.id].completed = e.target.checked;
+        saveTasks();
+      }
+      if (e.target.dataset.del !== undefined) {
+        tasks.splice(e.target.dataset.del, 1);
+        saveTasks();
+      }
+    });
+
+    /* 3. Scratchpad Notes Logic */
+    const notesArea = document.getElementById('notes');
+    notesArea.value = localStorage.getItem('student_notes') || '';
+
+    function updateWordCount() {
+      const words = notesArea.value.trim() ? notesArea.value.trim().split(/\s+/).length : 0;
+      document.getElementById('note-word-count').textContent = `${words} words`;
+    }
+
+    notesArea.addEventListener('input', () => {
+      localStorage.setItem('student_notes', notesArea.value);
+      updateWordCount();
+    });
+    updateWordCount();
+
+    /* 4. GPA Target Calculator */
+    const gpaRowsContainer = document.getElementById('gpa-rows');
+    const gpaDisplay = document.getElementById('gpa-display');
+    const addCourseBtn = document.getElementById('add-course-btn');
+
+    function calculateGPA() {
+      const grades = document.querySelectorAll('.gpa-grade');
+      const credits = document.querySelectorAll('.gpa-credits');
+      let totalQualityPoints = 0;
+      let totalCredits = 0;
+
+      grades.forEach((gradeEl, i) => {
+        const gradeVal = parseFloat(gradeEl.value);
+        const creditVal = parseFloat(credits[i].value) || 0;
+        totalQualityPoints += gradeVal * creditVal;
+        totalCredits += creditVal;
+      });
+
+      const finalGPA = totalCredits > 0 ? (totalQualityPoints / totalCredits).toFixed(2) : '4.00';
+      gpaDisplay.textContent = finalGPA;
+    }
+
+    addCourseBtn.addEventListener('click', () => {
+      const row = document.createElement('div');
+      row.className = 'gpa-row';
+      row.innerHTML = `
+        <input type="text" class="input-field" placeholder="Course">
+        <select class="input-field gpa-grade" style="max-width: 90px;">
+          <option value="4.0">A (4.0)</option>
+          <option value="3.7">A- (3.7)</option>
+          <option value="3.3">B+ (3.3)</option>
+          <option value="3.0">B (3.0)</option>
+          <option value="2.7">B- (2.7)</option>
+          <option value="2.0">C (2.0)</option>
+        </select>
+        <input type="number" class="input-field gpa-credits" placeholder="Credits" value="3" min="1" max="6" style="max-width: 75px;">
+      `;
+      gpaRowsContainer.appendChild(row);
+      attachGpaListeners();
+      calculateGPA();
+    });
+
+    function attachGpaListeners() {
+      document.querySelectorAll('.gpa-grade, .gpa-credits').forEach(el => {
+        el.removeEventListener('input', calculateGPA);
+        el.addEventListener('input', calculateGPA);
+      });
+    }
+    attachGpaListeners();
+    calculateGPA();
+
+    /* 5. Pure Web Audio Ambient Noise Generators */
+    let currentNoiseNode = null;
+    let activeSoundId = null;
+
+    function createPinkNoise() {
+      const ctx = getAudioContext();
+      const bufferSize = ctx.sampleRate * 2;
+      const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const output = noiseBuffer.getChannelData(0);
+      let b0 = 0, b1 = 0, b2 = 0;
+
+      for (let i = 0; i < bufferSize; i++) {
+        const white = Math.random() * 2 - 1;
+        b0 = 0.99886 * b0 + white * 0.0555179;
+        b1 = 0.99332 * b1 + white * 0.0750759;
+        b2 = 0.96900 * b2 + white * 0.1538520;
+        output[i] = (b0 + b1 + b2) * 0.1;
+      }
+
+      const whiteNoise = ctx.createBufferSource();
+      whiteNoise.buffer = noiseBuffer;
+      whiteNoise.loop = true;
+      return whiteNoise;
+    }
+
+    function toggleSound(soundId, type) {
+      const card = document.getElementById(soundId);
+      const btn = card.querySelector('button');
+
+      if (activeSoundId === soundId) {
+        if (currentNoiseNode) currentNoiseNode.stop();
+        currentNoiseNode = null;
+        activeSoundId = null;
+        card.classList.remove('playing');
+        btn.textContent = 'Play';
+        return;
+      }
+
+      if (currentNoiseNode) {
+        currentNoiseNode.stop();
+        document.querySelectorAll('.sound-card').forEach(c => c.classList.remove('playing'));
+        document.querySelectorAll('.sound-card button').forEach(b => b.textContent = 'Play');
+      }
+
+      const ctx = getAudioContext();
+      currentNoiseNode = createPinkNoise();
+
+      // Filter modulation for Rain effect
+      if (type === 'rain') {
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.value = 800;
+        currentNoiseNode.connect(filter);
+        filter.connect(ctx.destination);
+      } else {
+        currentNoiseNode.connect(ctx.destination);
+      }
+
+      currentNoiseNode.start();
+      activeSoundId = soundId;
+      card.classList.add('playing');
+      btn.textContent = 'Stop';
+    }
+
+    document.getElementById('sound-rain').addEventListener('click', () => toggleSound('sound-rain', 'rain'));
+    document.getElementById('sound-pink').addEventListener('click', () => toggleSound('sound-pink', 'pink'));
+
+    // Initial render
+    renderTasks();
+  </script>
+</body>
+</html>
