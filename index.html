@@ -4,6 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Student Workspace & Study Hub</title>
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js"></script>
+
   <style>
     :root {
       --primary: #4f46e5;
@@ -23,7 +27,7 @@
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
-    body { background: var(--bg); color: var(--text); padding: 1rem; max-width: 1050px; margin: auto; }
+    body { background: var(--bg); color: var(--text); padding: 1rem; max-width: 1100px; margin: auto; }
     
     header { text-align: center; margin-bottom: 1.2rem; }
     header h1 { font-size: 1.5rem; color: var(--primary); font-weight: 800; }
@@ -82,7 +86,6 @@
 
   <div class="grid">
 
-    <!-- 1. AI STUDY & DOCUMENT ENGINE -->
     <div class="card card-span-2">
       <h2>
         <span>✨ Inbuilt Study & Revision Assistant</span>
@@ -90,20 +93,20 @@
       </h2>
 
       <div class="input-mode-toggle">
-        <button class="input-mode-btn active" id="btn-mode-paste" onclick="setMode('paste')">📋 Paste Notes / Text</button>
-        <button class="input-mode-btn" id="btn-mode-file" onclick="setMode('file')">📁 Upload Text / PDF File</button>
+        <button class="input-mode-btn active" id="btn-mode-file" onclick="setMode('file')">📁 Upload PDF / TXT</button>
+        <button class="input-mode-btn" id="btn-mode-paste" onclick="setMode('paste')">📋 Paste Notes / Text</button>
       </div>
 
-      <div id="sec-paste">
-        <textarea id="paste-input" placeholder="Paste your syllabus, lecture notes, textbook chapters, or definitions here..." style="height:95px;margin-bottom:0.5rem"></textarea>
-        <button onclick="processPastedText()" style="width:100%">⚡ Process & Analyze Notes</button>
-      </div>
-
-      <div id="sec-file" style="display:none">
+      <div id="sec-file">
         <div class="drop-zone" onclick="document.getElementById('file-picker').click()">
-          <span id="upload-status-label">📄 Click to select <strong>TXT, MD, or PDF file</strong></span>
-          <input type="file" id="file-picker" accept=".txt,.text,.md,.pdf" style="display:none" onchange="handleFile(event)">
+          <span id="upload-status-label">📄 Click to select <strong>PDF, TXT, or MD file</strong></span>
+          <input type="file" id="file-picker" accept=".pdf,.txt,.text,.md" style="display:none" onchange="handleFile(event)">
         </div>
+      </div>
+
+      <div id="sec-paste" style="display:none">
+        <textarea id="paste-input" placeholder="Paste your syllabus, lecture notes, or slides text directly here..." style="height:95px;margin-bottom:0.5rem"></textarea>
+        <button onclick="processPastedText()" style="width:100%">⚡ Process & Analyze Pasted Text</button>
       </div>
 
       <div class="ai-tabs">
@@ -119,7 +122,7 @@
           <button onclick="summarize('defs')" style="padding:4px 8px;font-size:0.78rem">📖 Key Definitions</button>
           <button onclick="summarize('cheat')" style="padding:4px 8px;font-size:0.78rem">⚡ Exam Cheat Sheet</button>
         </div>
-        <div class="ai-output" id="output-sum">Paste your study notes above and click 'Process & Analyze Notes' to get started.</div>
+        <div class="ai-output" id="output-sum">Upload a PDF or paste notes above to generate study guides.</div>
       </div>
 
       <div id="view-quiz" style="display:none">
@@ -133,19 +136,19 @@
           <button onclick="buildQuiz()" style="flex:1">⚡ Generate Mock Test</button>
         </div>
         <div id="quiz-score-box" style="display:none;margin-bottom:0.6rem" class="stat-box">Score: <span id="quiz-score-val">0</span></div>
-        <div class="ai-output" id="output-quiz" style="max-height:300px">Select the number of questions and click Generate.</div>
+        <div class="ai-output" id="output-quiz" style="max-height:300px">Select question count and click Generate.</div>
       </div>
 
       <div id="view-search" style="display:none">
         <div class="row">
-          <input type="text" id="search-input" placeholder="Type a concept, formula, or keyword..." onkeydown="if(event.key==='Enter') executeSearch()">
+          <input type="text" id="search-input" placeholder="Type a concept or keyword..." onkeydown="if(event.key==='Enter') executeSearch()">
           <button onclick="executeSearch()" style="width:90px">Search</button>
         </div>
         <div class="ai-output" id="output-search">Search any term or formula from your loaded notes.</div>
       </div>
 
       <div id="view-exp" style="display:none">
-        <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:0.5rem">Download your revision material as editable files:</p>
+        <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:0.5rem">Download revision notes as editable files:</p>
         <div class="export-grid">
           <button class="btn-export" onclick="downloadWord()">📄 Word Doc (.doc)</button>
           <button class="btn-export" onclick="downloadExcel()">📊 Excel Sheet (.csv)</button>
@@ -154,7 +157,6 @@
       </div>
     </div>
 
-    <!-- 2. 10-POINT GPA CALCULATOR -->
     <div class="card">
       <h2><span>📊 Semester GPA (10 Pt)</span> <button style="padding:2px 8px" onclick="addGpaRow()">+ Course</button></h2>
       <div id="gpa-table" style="max-height:160px;overflow-y:auto;margin-bottom:0.5rem">
@@ -170,7 +172,6 @@
       <div class="stat-box" id="gpa-display">10.00</div>
     </div>
 
-    <!-- 3. TARGET CGPA SIMULATOR -->
     <div class="card">
       <h2>🎯 Target CGPA Simulator</h2>
       <div class="row">
@@ -185,7 +186,6 @@
       <center style="margin-top:6px"><span id="sim-badge" class="badge" style="background:#fef3c7;color:#b45309">🔥 High Effort (Needs S/A+)</span></center>
     </div>
 
-    <!-- 4. FOCUS TIMER -->
     <div class="card">
       <h2>⏱️ Focus Timer</h2>
       <div class="timer" id="timer-display">25:00</div>
@@ -195,7 +195,6 @@
       </div>
     </div>
 
-    <!-- 5. TASKS & EXAM TRACKER -->
     <div class="card">
       <h2>📝 Tasks & Exam Dates</h2>
       <div class="row">
@@ -208,13 +207,17 @@
   </div>
 
   <script>
+    // Ensure PDF.js worker is properly configured
+    if (typeof pdfjsLib !== 'undefined') {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+    }
+
     /* Global Content Store */
     let studyText = "";
     let studySentences = [];
     let studyKeyNouns = [];
     let currentQuizScore = 0;
     let currentQuizMax = 0;
-    let quizDataStore = [];
 
     /* Mode & Tab Switching */
     function setMode(mode) {
@@ -232,49 +235,81 @@
       });
     }
 
-    /* Content Processing */
+    /* Process Pasted Notes */
     function processPastedText() {
       const raw = document.getElementById('paste-input').value.trim();
       if (!raw) { alert('Please paste some text first!'); return; }
       storeText("Pasted Notes", raw);
     }
 
+    /* Process PDF / TXT File Uploads */
     function handleFile(e) {
       const file = e.target.files[0];
       if (!file) return;
 
-      const reader = new FileReader();
-      reader.onload = function(evt) {
-        let content = evt.target.result;
-        if (typeof content !== 'string') {
-          const bytes = new Uint8Array(content);
-          content = "";
-          for (let i = 0; i < bytes.length; i++) {
-            if (bytes[i] >= 32 && bytes[i] <= 126) content += String.fromCharCode(bytes[i]);
-            else if (bytes[i] === 10 || bytes[i] === 13) content += " ";
-          }
-        }
-        storeText(file.name, content);
-      };
+      const label = document.getElementById('upload-status-label');
+      label.innerHTML = `⏳ Extracting text from <strong>${file.name}</strong>...`;
 
-      if (file.name.endsWith('.txt') || file.name.endsWith('.md')) {
-        reader.readAsText(file);
+      if (file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf') {
+        const fileReader = new FileReader();
+        fileReader.onload = async function() {
+          try {
+            const typedarray = new Uint8Array(this.result);
+            const loadingTask = pdfjsLib.getDocument({ data: typedarray });
+            const pdf = await loadingTask.promise;
+            
+            let fullExtractedText = "";
+            for (let i = 1; i <= pdf.numPages; i++) {
+              const page = await pdf.getPage(i);
+              const textContent = await page.getTextContent();
+              const pageText = textContent.items.map(item => item.str).join(' ');
+              fullExtractedText += pageText + "\n";
+            }
+
+            if (!fullExtractedText.trim()) {
+              alert("No digital text found in this PDF (it may contain scanned image slides). Try copying and pasting the text into the 'Paste Notes' tab!");
+              label.innerHTML = `⚠️ Scanned/Image PDF detected: <strong>${file.name}</strong>`;
+              return;
+            }
+
+            storeText(file.name, fullExtractedText);
+          } catch(err) {
+            console.error("PDF extraction error:", err);
+            alert("Could not extract text from this PDF. Please use the 'Paste Notes / Text' tab to paste your lecture text!");
+            label.innerHTML = `❌ Error reading <strong>${file.name}</strong>`;
+          }
+        };
+        fileReader.readAsArrayBuffer(file);
       } else {
-        reader.readAsArrayBuffer(file);
+        // Plain text (.txt / .md)
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+          storeText(file.name, evt.target.result);
+        };
+        reader.readAsText(file);
       }
     }
 
     function storeText(sourceName, raw) {
-      studyText = raw.replace(/\s+/g, ' ').trim();
-      studySentences = studyText.match(/[^.!?]+[.!?]+/g) || [studyText];
-      studySentences = studySentences.map(s => s.trim()).filter(s => s.length > 20);
+      // Filter out any leaked PDF stream bytecode markers
+      let clean = raw.replace(/\/Type\s*\/[a-zA-Z]+/g, '')
+                     .replace(/<<[\s\S]*?>>/g, '')
+                     .replace(/\bendobj\b|\bendstream\b|\bstream\b/gi, '')
+                     .replace(/\[[0-9\s-]+\]/g, '')
+                     .replace(/\s+/g, ' ')
+                     .trim();
+
+      studyText = clean;
+      studySentences = studyText.match(/[^.!?\n]+[.!?\n]+/g) || [studyText];
+      studySentences = studySentences.map(s => s.trim()).filter(s => s.length > 25 && !s.includes('/ExtGState'));
 
       if (!studySentences.length) studySentences = [studyText];
 
+      // Extract subject keywords
       const nouns = studyText.match(/\b[A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,})*\b/g) || [];
       const map = {};
       nouns.forEach(n => {
-        if (!/^(The|This|These|That|When|Where|There|Then|However|Therefore|For|And|With|From|Into)$/i.test(n)) {
+        if (!/^(The|This|These|That|When|Where|There|Then|However|Therefore|For|And|With|From|Into|Type|Font|Page|Obj)$/i.test(n)) {
           map[n] = (map[n] || 0) + 1;
         }
       });
@@ -290,17 +325,17 @@
 
     /* Summary Engine */
     function summarize(type) {
-      if (!studySentences.length) { alert("Please load or paste some notes first!"); return; }
+      if (!studySentences.length) { alert("Please load or paste your notes first!"); return; }
       
       let res = "";
       if (type === 'defs') {
-        const defs = studySentences.filter(s => /\b(is defined as|is known as|refers to|denotes|is called|means|is the)\b/i.test(s));
-        res = "📖 KEY DEFINITIONS & THEOREMS:\n\n" + 
+        const defs = studySentences.filter(s => /\b(is defined as|is known as|refers to|denotes|is called|means|is the|concept|algorithm|method)\b/i.test(s));
+        res = "📖 KEY DEFINITIONS & CONCEPTS:\n\n" + 
           (defs.length ? defs.slice(0, 8).map((d, i) => `${i+1}. ${d}`).join('\n\n') : studySentences.slice(0, 6).join('\n\n'));
       } else if (type === 'cheat') {
         res = "⚡ EXAM CHEAT SHEET:\n\n" +
-          "📌 Top Topics:\n• " + (studyKeyNouns.length ? studyKeyNouns.slice(0, 10).join('\n• ') : 'Core Concepts') + "\n\n" +
-          "📌 Important Points:\n• " + studySentences.slice(0, 5).join('\n• ');
+          "📌 High Frequency Topics:\n• " + (studyKeyNouns.length ? studyKeyNouns.slice(0, 10).join('\n• ') : 'Core Concepts') + "\n\n" +
+          "📌 Core Takeaways:\n• " + studySentences.slice(0, 5).join('\n• ');
       } else {
         res = "📑 CORE REVISION HIGHLIGHTS:\n\n• " + studySentences.slice(0, 8).join('\n\n• ');
       }
@@ -315,7 +350,6 @@
       const count = parseInt(document.getElementById('quiz-count').value);
       currentQuizMax = count;
       currentQuizScore = 0;
-      quizDataStore = [];
 
       const sample = studySentences.slice().sort(() => 0.5 - Math.random()).slice(0, count);
       const outputContainer = document.getElementById('output-quiz');
@@ -329,10 +363,9 @@
         const blank = sent.replace(target, "________");
 
         let dist = studyKeyNouns.filter(n => n.toLowerCase() !== target.toLowerCase()).slice(0, 3);
-        while (dist.length < 3) dist.push(["Factor", "Constant", "System", "Vector"][dist.length]);
+        while (dist.length < 3) dist.push(["Process", "Factor", "Parameter", "System"][dist.length]);
 
         const opts = [target, ...dist].sort(() => 0.5 - Math.random());
-        quizDataStore.push({ target: target });
 
         const card = document.createElement('div');
         card.className = 'quiz-card';
