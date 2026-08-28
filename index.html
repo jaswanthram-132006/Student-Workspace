@@ -5,205 +5,773 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Student Workspace & Study Hub</title>
   
+  <!-- PDF Engine Libraries -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js"></script>
 
   <style>
     :root {
-      --primary: #4f46e5;
-      --primary-hover: #4338ca;
-      --primary-light: #eef2ff;
-      --bg: #f8fafc;
-      --surface: #ffffff;
-      --border: #cbd5e1;
-      --text: #0f172a;
-      --text-muted: #64748b;
-      --danger: #ef4444;
-      --danger-light: #fee2e2;
-      --success: #10b981;
-      --success-light: #d1fae5;
-      --warning: #f59e0b;
-      --warning-light: #fef3c7;
+      --bg-dark: #030712;
+      --card-bg: rgba(9, 18, 38, 0.7);
+      --card-border: rgba(56, 189, 248, 0.2);
+      --card-hover-border: rgba(0, 229, 255, 0.5);
+      --cyan-glow: #00e5ff;
+      --cyan-bright: #38bdf8;
+      --cyan-muted: #94a3b8;
+      --text-main: #f8fafc;
+      --text-dim: #64748b;
+      --btn-active: linear-gradient(135deg, #0284c7, #00e5ff);
+      --shadow-neon: 0 8px 32px 0 rgba(0, 229, 255, 0.08);
+      --inset-glow: inset 0 0 16px rgba(56, 189, 248, 0.06);
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
-    body { background: var(--bg); color: var(--text); padding: 1rem; max-width: 1100px; margin: auto; }
-    
-    header { text-align: center; margin-bottom: 1.2rem; }
-    header h1 { font-size: 1.5rem; color: var(--primary); font-weight: 800; }
-    header p { font-size: 0.85rem; color: var(--text-muted); margin-top: 3px; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
 
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.2rem; }
-    .card { background: var(--surface); border-radius: 16px; padding: 1.2rem; box-shadow: 0 4px 12px rgba(0,0,0,0.04); border: 1px solid var(--border); display: flex; flex-direction: column; }
-    .card-span-2 { grid-column: span 1; }
-    @media (min-width: 800px) { .card-span-2 { grid-column: span 2; } }
+    body {
+      background: radial-gradient(circle at 50% 0%, #081735 0%, #030712 65%, #01040a 100%);
+      color: var(--text-main);
+      padding: 1.2rem;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+    }
 
-    .card h2 { font-size: 1rem; margin-bottom: 0.8rem; color: #1e293b; display: flex; justify-content: space-between; align-items: center; font-weight: 700; }
-    
-    input, select, button, textarea { padding: 0.55rem 0.75rem; border-radius: 10px; border: 1px solid var(--border); font-size: 0.85rem; outline: none; }
-    input, select, textarea { width: 100%; background: var(--bg); color: var(--text); }
-    input:focus, select:focus, textarea:focus { border-color: var(--primary); background: #fff; }
-    button { background: var(--primary); color: #fff; border: none; cursor: pointer; font-weight: 600; transition: 0.15s ease; }
-    button:hover { background: var(--primary-hover); }
+    .container {
+      width: 100%;
+      max-width: 1120px;
+    }
 
-    .row { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; align-items: center; }
-    .stat-box { background: var(--primary-light); color: var(--primary); font-weight: 800; font-size: 1.4rem; text-align: center; padding: 0.7rem; border-radius: 12px; margin-top: auto; }
-    .badge { font-size: 0.75rem; padding: 4px 8px; border-radius: 6px; font-weight: 600; display: inline-block; }
-    .timer { font-size: 2.2rem; font-weight: 800; text-align: center; margin: 0.6rem 0; font-variant-numeric: tabular-nums; }
-    .task-done { text-decoration: line-through; color: var(--text-muted); }
+    /* Top Navigation / Header */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.4rem;
+      padding-bottom: 0.8rem;
+    }
 
-    /* AI Studio Tabs */
-    .input-mode-toggle { display: flex; gap: 6px; margin-bottom: 10px; }
-    .input-mode-btn { background: #f1f5f9; color: var(--text-muted); padding: 5px 12px; border-radius: 8px; font-size: 0.8rem; }
-    .input-mode-btn.active { background: var(--primary); color: #fff; }
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
 
-    .drop-zone { border: 2px dashed #94a3b8; border-radius: 12px; padding: 1rem; text-align: center; background: #f8fafc; cursor: pointer; margin-bottom: 0.8rem; }
-    .drop-zone:hover { border-color: var(--primary); background: var(--primary-light); }
-    
-    .ai-tabs { display: flex; gap: 0.4rem; margin: 0.8rem 0; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; overflow-x: auto; }
-    .ai-tab-btn { background: transparent; color: var(--text-muted); border: 1px solid transparent; padding: 5px 12px; border-radius: 8px; font-size: 0.82rem; }
-    .ai-tab-btn.active { background: var(--primary-light); color: var(--primary); border-color: var(--border); font-weight: 700; }
-    
-    .ai-output { background: #f8fafc; border: 1px solid var(--border); border-radius: 12px; padding: 1rem; font-size: 0.88rem; line-height: 1.55; max-height: 280px; overflow-y: auto; white-space: pre-wrap; word-break: break-word; }
-    
-    .quiz-card { background: #ffffff; border: 1px solid var(--border); border-radius: 10px; padding: 0.85rem; margin-bottom: 0.8rem; }
-    .quiz-opt { display: block; margin: 5px 0; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); cursor: pointer; font-size: 0.82rem; transition: 0.15s; }
-    .quiz-opt:hover { border-color: var(--primary); background: var(--primary-light); }
-    .quiz-opt.correct { background: var(--success-light); border-color: var(--success); color: #065f46; font-weight: 700; }
-    .quiz-opt.wrong { background: var(--danger-light); border-color: var(--danger); color: #991b1b; }
+    .header-logo {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: rgba(14, 165, 233, 0.15);
+      border: 1px solid rgba(0, 229, 255, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      box-shadow: 0 0 15px rgba(0, 229, 255, 0.25);
+    }
 
-    .export-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem; margin-top: 0.8rem; }
-    .btn-export { background: #f1f5f9; color: var(--text); border: 1px solid var(--border); padding: 10px 8px; font-size: 0.82rem; }
-    .btn-export:hover { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
+    .header-title h1 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      background: linear-gradient(90deg, #ffffff, #67e8f9);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .header-title p {
+      font-size: 0.78rem;
+      color: var(--cyan-muted);
+      margin-top: 2px;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .icon-pill {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid var(--card-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--cyan-bright);
+      transition: all 0.2s;
+    }
+
+    .icon-pill:hover {
+      border-color: var(--cyan-glow);
+      box-shadow: 0 0 12px rgba(0, 229, 255, 0.4);
+    }
+
+    /* Grid Layout */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 1.2rem;
+    }
+
+    .col-8 { grid-column: span 8; }
+    .col-4 { grid-column: span 4; }
+    .col-12 { grid-column: span 12; }
+
+    @media (max-width: 860px) {
+      .col-8, .col-4 { grid-column: span 12; }
+    }
+
+    /* Card Panels */
+    .card {
+      background: var(--card-bg);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 1.25rem;
+      box-shadow: var(--shadow-neon);
+      position: relative;
+    }
+
+    .card-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #f8fafc;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .title-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .ai-tag {
+      background: rgba(0, 229, 255, 0.15);
+      border: 1px solid rgba(0, 229, 255, 0.4);
+      color: var(--cyan-glow);
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    /* Input Fields & Buttons */
+    input, select, textarea {
+      background: rgba(3, 7, 18, 0.7);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      color: #f8fafc;
+      padding: 0.55rem 0.8rem;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      outline: none;
+      transition: all 0.2s;
+      width: 100%;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--cyan-glow);
+      box-shadow: 0 0 10px rgba(0, 229, 255, 0.25);
+    }
+
+    button {
+      background: rgba(14, 165, 233, 0.15);
+      color: var(--cyan-bright);
+      border: 1px solid var(--card-border);
+      padding: 0.55rem 1rem;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    button:hover {
+      background: var(--btn-active);
+      color: #ffffff;
+      border-color: transparent;
+      box-shadow: 0 0 14px rgba(0, 229, 255, 0.45);
+    }
+
+    .btn-active-glow {
+      background: var(--btn-active) !important;
+      color: #ffffff !important;
+      border-color: transparent !important;
+      box-shadow: 0 0 14px rgba(0, 229, 255, 0.35);
+    }
+
+    /* Mode Pill Switcher */
+    .mode-toggle {
+      display: flex;
+      gap: 6px;
+      background: rgba(2, 6, 23, 0.8);
+      padding: 4px;
+      border-radius: 12px;
+      margin-bottom: 12px;
+      border: 1px solid rgba(56, 189, 248, 0.15);
+    }
+
+    .mode-btn {
+      flex: 1;
+      border: none;
+      background: transparent;
+      color: var(--cyan-muted);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+    }
+
+    .mode-btn.active {
+      background: rgba(14, 165, 233, 0.25);
+      color: #ffffff;
+      border: 1px solid rgba(0, 229, 255, 0.4);
+    }
+
+    /* File Drop Zone */
+    .drop-zone {
+      border: 1.5px dashed rgba(56, 189, 248, 0.35);
+      border-radius: 14px;
+      padding: 1.2rem;
+      text-align: center;
+      background: rgba(3, 7, 18, 0.4);
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 12px;
+    }
+
+    .drop-zone:hover {
+      border-color: var(--cyan-glow);
+      background: rgba(14, 165, 233, 0.08);
+      box-shadow: var(--inset-glow);
+    }
+
+    .drop-icon {
+      font-size: 1.4rem;
+      margin-bottom: 4px;
+      display: block;
+      color: var(--cyan-bright);
+    }
+
+    .drop-label {
+      font-size: 0.82rem;
+      color: var(--cyan-muted);
+    }
+
+    /* AI Sub-Tabs */
+    .ai-tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 10px;
+      border-bottom: 1px solid rgba(56, 189, 248, 0.12);
+      padding-bottom: 8px;
+      overflow-x: auto;
+    }
+
+    .ai-tab-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--cyan-muted);
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 0.78rem;
+    }
+
+    .ai-tab-btn.active {
+      background: rgba(14, 165, 233, 0.2);
+      color: var(--cyan-glow);
+      border-color: rgba(0, 229, 255, 0.3);
+    }
+
+    /* AI Output Box */
+    .ai-output-box {
+      background: rgba(2, 6, 23, 0.75);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      border-radius: 14px;
+      padding: 1rem;
+      font-size: 0.85rem;
+      line-height: 1.55;
+      color: #cbd5e1;
+      max-height: 180px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      box-shadow: var(--inset-glow);
+    }
+
+    /* Circular GPA Meter */
+    .gpa-circle-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin: 1.2rem 0;
+    }
+
+    .gpa-circle {
+      width: 145px;
+      height: 145px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(14, 165, 233, 0.12) 0%, rgba(3, 7, 18, 0.8) 75%);
+      border: 2px solid var(--cyan-bright);
+      box-shadow: 0 0 25px rgba(0, 229, 255, 0.3), inset 0 0 15px rgba(0, 229, 255, 0.2);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .gpa-score-text {
+      font-size: 2rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: #ffffff;
+      text-shadow: 0 0 10px rgba(0, 229, 255, 0.5);
+    }
+
+    .gpa-scale-text {
+      font-size: 0.72rem;
+      color: var(--cyan-bright);
+      font-weight: 600;
+      margin-top: -2px;
+    }
+
+    /* Circular Timer Dial */
+    .timer-ring-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin: 0.8rem 0;
+    }
+
+    .timer-circle {
+      width: 130px;
+      height: 130px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(14, 165, 233, 0.08) 0%, rgba(3, 7, 18, 0.9) 70%);
+      border: 2px solid rgba(0, 229, 255, 0.4);
+      box-shadow: 0 0 20px rgba(0, 229, 255, 0.2);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .timer-digits {
+      font-size: 1.85rem;
+      font-weight: 800;
+      color: #ffffff;
+      font-variant-numeric: tabular-nums;
+      text-shadow: 0 0 8px rgba(0, 229, 255, 0.4);
+    }
+
+    .timer-sublabel {
+      font-size: 0.68rem;
+      color: var(--cyan-muted);
+    }
+
+    /* Result Pill Display */
+    .neon-stat-display {
+      background: rgba(3, 7, 18, 0.85);
+      border: 1px solid rgba(0, 229, 255, 0.35);
+      border-radius: 12px;
+      padding: 0.8rem;
+      text-align: center;
+      margin-top: 10px;
+      box-shadow: var(--inset-glow);
+    }
+
+    .neon-stat-val {
+      font-size: 1.7rem;
+      font-weight: 800;
+      color: var(--cyan-glow);
+      text-shadow: 0 0 12px rgba(0, 229, 255, 0.6);
+    }
+
+    .neon-badge {
+      font-size: 0.72rem;
+      padding: 2px 8px;
+      border-radius: 6px;
+      margin-top: 4px;
+      display: inline-block;
+      font-weight: 600;
+    }
+
+    /* Tasks list */
+    .task-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 10px;
+      background: rgba(3, 7, 18, 0.6);
+      border: 1px solid rgba(56, 189, 248, 0.15);
+      border-radius: 8px;
+      margin-bottom: 6px;
+      font-size: 0.82rem;
+    }
+
+    .task-item.completed span {
+      text-decoration: line-through;
+      color: var(--text-dim);
+    }
+
+    /* Quick Access Grid */
+    .quick-access-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 10px;
+      margin-top: 6px;
+    }
+
+    .quick-btn {
+      background: rgba(14, 165, 233, 0.08);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      border-radius: 14px;
+      padding: 12px 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      color: var(--cyan-muted);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .quick-btn:hover {
+      border-color: var(--cyan-glow);
+      background: rgba(14, 165, 233, 0.2);
+      color: #ffffff;
+      transform: translateY(-2px);
+      box-shadow: 0 0 14px rgba(0, 229, 255, 0.3);
+    }
+
+    .quick-icon {
+      font-size: 1.3rem;
+      color: var(--cyan-bright);
+    }
+
+    /* Bottom Quote Banner */
+    .quote-banner {
+      background: linear-gradient(90deg, rgba(8, 20, 42, 0.85) 0%, rgba(2, 6, 23, 0.95) 100%);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: 16px;
+      padding: 1.1rem 1.4rem;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-size: 0.88rem;
+      color: #cbd5e1;
+      box-shadow: var(--shadow-neon);
+    }
+
+    .quote-icon {
+      font-size: 1.6rem;
+      color: var(--cyan-glow);
+    }
+
+    .quiz-card {
+      background: rgba(3, 7, 18, 0.8);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 0.85rem;
+      margin-bottom: 0.8rem;
+    }
+
+    .quiz-opt {
+      display: block;
+      margin: 5px 0;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      background: rgba(15, 23, 42, 0.6);
+      cursor: pointer;
+      font-size: 0.8rem;
+      transition: 0.15s;
+    }
+
+    .quiz-opt:hover {
+      border-color: var(--cyan-glow);
+      background: rgba(14, 165, 233, 0.15);
+    }
+
+    .quiz-opt.correct {
+      background: rgba(16, 185, 129, 0.2);
+      border-color: var(--success);
+      color: #34d399;
+      font-weight: 700;
+    }
+
+    .quiz-opt.wrong {
+      background: rgba(239, 68, 68, 0.2);
+      border-color: var(--danger);
+      color: #f87171;
+    }
   </style>
 </head>
 <body>
 
-  <header>
-    <h1>🎓 Student Workspace & Study Hub</h1>
-    <p>10-Point GPA Calculator, Target CGPA Planner, Focus Timer & AI Study Notes</p>
-  </header>
-
-  <div class="grid">
-
-    <div class="card card-span-2">
-      <h2>
-        <span>✨ Inbuilt Study & Revision Assistant</span>
-        <span id="doc-status" class="badge" style="background:#fee2e2;color:#dc2626">No Notes Loaded</span>
-      </h2>
-
-      <div class="input-mode-toggle">
-        <button class="input-mode-btn active" id="btn-mode-file" onclick="setMode('file')">📁 Upload PDF / TXT</button>
-        <button class="input-mode-btn" id="btn-mode-paste" onclick="setMode('paste')">📋 Paste Notes / Text</button>
+  <div class="container">
+    
+    <!-- Top Header -->
+    <header>
+      <div class="header-left">
+        <div class="header-logo">🎓</div>
+        <div class="header-title">
+          <h1>Student Workspace & Study Hub</h1>
+          <p>10-Point GPA Calculator, Target CGPA Planner, Focus Timer & AI Study Notes</p>
+        </div>
       </div>
+      <div class="header-actions">
+        <div class="icon-pill" title="Notifications">🔔</div>
+        <div class="icon-pill" title="Student Profile">👤</div>
+      </div>
+    </header>
 
-      <div id="sec-file">
-        <div class="drop-zone" onclick="document.getElementById('file-picker').click()">
-          <span id="upload-status-label">📄 Click to select <strong>PDF, TXT, or MD file</strong></span>
-          <input type="file" id="file-picker" accept=".pdf,.txt,.text,.md" style="display:none" onchange="handleFile(event)">
+    <!-- Main Dashboard Grid -->
+    <div class="dashboard-grid">
+
+      <!-- ==================== 1. AI STUDY ASSISTANT (TOP LEFT) ==================== -->
+      <div class="card col-8">
+        <div class="card-title">
+          <div class="title-left">
+            <span>📚 Inbuilt Study & Revision Assistant</span>
+            <span class="ai-tag">AI</span>
+          </div>
+          <span id="doc-status" class="neon-badge" style="background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.3)">No File</span>
+        </div>
+
+        <!-- Mode Toggle -->
+        <div class="mode-toggle">
+          <button class="mode-btn active" id="btn-mode-file" onclick="setMode('file')">📁 Upload PDF / TXT</button>
+          <button class="mode-btn" id="btn-mode-paste" onclick="setMode('paste')">📋 Paste Notes / Text</button>
+        </div>
+
+        <!-- File Upload Area -->
+        <div id="sec-file">
+          <div class="drop-zone" onclick="document.getElementById('file-picker').click()">
+            <span class="drop-icon">☁️</span>
+            <span id="upload-status-label" class="drop-label">Click to select <strong>PDF, TXT, or MD file</strong><br><small style="color:var(--text-dim)">Drag & drop lecture notes here</small></span>
+            <input type="file" id="file-picker" accept=".pdf,.txt,.text,.md" style="display:none" onchange="handleFile(event)">
+          </div>
+        </div>
+
+        <!-- Paste Text Area -->
+        <div id="sec-paste" style="display:none;margin-bottom:12px">
+          <textarea id="paste-input" placeholder="Paste your syllabus, lecture notes, or slides text directly here..." style="height:90px;margin-bottom:6px"></textarea>
+          <button onclick="processPastedText()" style="width:100%" class="btn-active-glow">⚡ Process & Analyze Notes</button>
+        </div>
+
+        <!-- Sub Tabs -->
+        <div class="ai-tabs">
+          <button class="ai-tab-btn active" id="tab-btn-sum" onclick="showTab('sum')">📝 Smart Notes</button>
+          <button class="ai-tab-btn" id="tab-btn-quiz" onclick="showTab('quiz')">🎯 Mock Quiz</button>
+          <button class="ai-tab-btn" id="tab-btn-search" onclick="showTab('search')">🔍 Concept Search</button>
+          <button class="ai-tab-btn" id="tab-btn-exp" onclick="showTab('exp')">📤 Export Docs</button>
+        </div>
+
+        <!-- Summary View -->
+        <div id="view-sum">
+          <div class="row" style="margin-bottom:8px">
+            <button onclick="summarize('points')" style="padding:4px 10px;font-size:0.75rem">📑 Core Summary</button>
+            <button onclick="summarize('defs')" style="padding:4px 10px;font-size:0.75rem">📖 Key Definitions</button>
+            <button onclick="summarize('cheat')" style="padding:4px 10px;font-size:0.75rem">⚡ Exam Cheat Sheet</button>
+          </div>
+          <div class="ai-output-box" id="output-sum">Upload a PDF or paste notes above to generate study guides.</div>
+        </div>
+
+        <!-- Quiz View -->
+        <div id="view-quiz" style="display:none">
+          <div class="row" style="margin-bottom:8px">
+            <select id="quiz-count" style="max-width:130px">
+              <option value="3">3 Questions</option>
+              <option value="5" selected>5 Questions</option>
+              <option value="10">10 Questions</option>
+            </select>
+            <button onclick="buildQuiz()" class="btn-active-glow" style="flex:1">⚡ Generate Mock Test</button>
+          </div>
+          <div id="quiz-score-box" style="display:none;margin-bottom:6px" class="neon-stat-display">Score: <span id="quiz-score-val" style="color:var(--cyan-glow);font-weight:bold">0</span></div>
+          <div class="ai-output-box" id="output-quiz" style="max-height:220px">Select question count and click Generate.</div>
+        </div>
+
+        <!-- Search View -->
+        <div id="view-search" style="display:none">
+          <div class="row" style="margin-bottom:8px">
+            <input type="text" id="search-input" placeholder="Type a concept or keyword..." onkeydown="if(event.key==='Enter') executeSearch()">
+            <button onclick="executeSearch()" style="width:85px">Search</button>
+          </div>
+          <div class="ai-output-box" id="output-search">Search any term or formula from your loaded notes.</div>
+        </div>
+
+        <!-- Export View -->
+        <div id="view-exp" style="display:none">
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+            <button onclick="downloadWord()">📄 Word (.doc)</button>
+            <button onclick="downloadExcel()">📊 Excel (.csv)</button>
+            <button onclick="downloadText()">📑 Text (.txt)</button>
+          </div>
         </div>
       </div>
 
-      <div id="sec-paste" style="display:none">
-        <textarea id="paste-input" placeholder="Paste your syllabus, lecture notes, or slides text directly here..." style="height:95px;margin-bottom:0.5rem"></textarea>
-        <button onclick="processPastedText()" style="width:100%">⚡ Process & Analyze Pasted Text</button>
-      </div>
-
-      <div class="ai-tabs">
-        <button class="ai-tab-btn active" id="tab-btn-sum" onclick="showTab('sum')">📝 Smart Notes</button>
-        <button class="ai-tab-btn" id="tab-btn-quiz" onclick="showTab('quiz')">🎯 Mock Quiz</button>
-        <button class="ai-tab-btn" id="tab-btn-search" onclick="showTab('search')">🔍 Concept Search</button>
-        <button class="ai-tab-btn" id="tab-btn-exp" onclick="showTab('exp')">📤 Export Docs</button>
-      </div>
-
-      <div id="view-sum">
-        <div class="row">
-          <button onclick="summarize('points')" style="padding:4px 8px;font-size:0.78rem">📑 Core Summary</button>
-          <button onclick="summarize('defs')" style="padding:4px 8px;font-size:0.78rem">📖 Key Definitions</button>
-          <button onclick="summarize('cheat')" style="padding:4px 8px;font-size:0.78rem">⚡ Exam Cheat Sheet</button>
+      <!-- ==================== 2. SEMESTER GPA (TOP RIGHT) ==================== -->
+      <div class="card col-4">
+        <div class="card-title">
+          <div class="title-left">
+            <span>📊 Semester GPA (10 Pt)</span>
+          </div>
+          <button onclick="addGpaRow()" style="padding:2px 8px;font-size:0.72rem">+ Course</button>
         </div>
-        <div class="ai-output" id="output-sum">Upload a PDF or paste notes above to generate study guides.</div>
-      </div>
 
-      <div id="view-quiz" style="display:none">
-        <div class="row" style="background:var(--bg);padding:6px 10px;border-radius:10px;margin-bottom:0.8rem">
-          <label style="font-size:0.82rem;font-weight:700;color:var(--text-muted);white-space:nowrap">Question Count:</label>
-          <select id="quiz-count" style="max-width:130px;margin-bottom:0">
-            <option value="3">3 Questions</option>
-            <option value="5" selected>5 Questions</option>
-            <option value="10">10 Questions</option>
-          </select>
-          <button onclick="buildQuiz()" style="flex:1">⚡ Generate Mock Test</button>
+        <div id="gpa-table" style="max-height:110px;overflow-y:auto;margin-bottom:0.5rem">
+          <div class="row gpa-entry" style="margin-bottom:4px">
+            <select class="gpa-val" onchange="recalcGPA()">
+              <option value="10">S (10)</option><option value="9">A+ (9)</option><option value="8">A (8)</option>
+              <option value="7">B+ (7)</option><option value="6.5">B (6.5)</option><option value="6">C+ (6)</option>
+              <option value="5">C (5)</option><option value="0">U (0)</option>
+            </select>
+            <input type="number" class="gpa-cr" value="4" min="1" max="10" placeholder="Credits" oninput="recalcGPA()" style="width:75px">
+          </div>
         </div>
-        <div id="quiz-score-box" style="display:none;margin-bottom:0.6rem" class="stat-box">Score: <span id="quiz-score-val">0</span></div>
-        <div class="ai-output" id="output-quiz" style="max-height:300px">Select question count and click Generate.</div>
-      </div>
 
-      <div id="view-search" style="display:none">
-        <div class="row">
-          <input type="text" id="search-input" placeholder="Type a concept or keyword..." onkeydown="if(event.key==='Enter') executeSearch()">
-          <button onclick="executeSearch()" style="width:90px">Search</button>
-        </div>
-        <div class="ai-output" id="output-search">Search any term or formula from your loaded notes.</div>
-      </div>
-
-      <div id="view-exp" style="display:none">
-        <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:0.5rem">Download revision notes as editable files:</p>
-        <div class="export-grid">
-          <button class="btn-export" onclick="downloadWord()">📄 Word Doc (.doc)</button>
-          <button class="btn-export" onclick="downloadExcel()">📊 Excel Sheet (.csv)</button>
-          <button class="btn-export" onclick="downloadText()">📑 Study Text (.txt)</button>
+        <!-- Glowing Circular GPA Meter -->
+        <div class="gpa-circle-container">
+          <div class="gpa-circle">
+            <span class="gpa-score-text" id="gpa-display">10.00</span>
+            <span class="gpa-scale-text">/10 CGPA</span>
+          </div>
         </div>
       </div>
+
+      <!-- ==================== 3. TARGET CGPA SIMULATOR (MIDDLE LEFT) ==================== -->
+      <div class="card col-4">
+        <div class="card-title">
+          <div class="title-left">
+            <span>🎯 Target CGPA Simulator</span>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">
+          <div>
+            <small style="font-size:0.7rem;color:var(--cyan-muted)">Current CGPA</small>
+            <input type="number" id="sim-cur-cg" value="7.8" step="0.01" oninput="recalcSim()">
+          </div>
+          <div>
+            <small style="font-size:0.7rem;color:var(--cyan-muted)">Done Credits</small>
+            <input type="number" id="sim-cur-cr" value="60" oninput="recalcSim()">
+          </div>
+          <div>
+            <small style="font-size:0.7rem;color:var(--cyan-muted)">Target CGPA</small>
+            <input type="number" id="sim-tgt-cg" value="8.5" step="0.01" oninput="recalcSim()">
+          </div>
+          <div>
+            <small style="font-size:0.7rem;color:var(--cyan-muted)">Rem Credits</small>
+            <input type="number" id="sim-rem-cr" value="40" oninput="recalcSim()">
+          </div>
+        </div>
+
+        <div class="neon-stat-display">
+          <div class="neon-stat-val" id="sim-display">9.55</div>
+          <span id="sim-badge" class="neon-badge" style="background:rgba(245,158,11,0.2);color:#fbbf24">🔥 High Effort (Needs S/A+)</span>
+        </div>
+      </div>
+
+      <!-- ==================== 4. FOCUS TIMER (MIDDLE CENTER) ==================== -->
+      <div class="card col-4">
+        <div class="card-title">
+          <div class="title-left">
+            <span>⏱️ Focus Timer</span>
+          </div>
+        </div>
+
+        <div class="timer-ring-wrapper">
+          <div class="timer-circle">
+            <span class="timer-digits" id="timer-display">25:00</span>
+            <span class="timer-sublabel">Pomodoro Focus</span>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:8px">
+          <button style="flex:1" id="timer-toggle-btn" class="btn-active-glow" onclick="toggleTimer()">Start</button>
+          <button style="flex:1" onclick="resetTimer()">Reset</button>
+        </div>
+      </div>
+
+      <!-- ==================== 5. TASKS & EXAMS (MIDDLE RIGHT) ==================== -->
+      <div class="card col-4">
+        <div class="card-title">
+          <div class="title-left">
+            <span>📝 Tasks & Exam Dates</span>
+          </div>
+        </div>
+
+        <div class="row" style="margin-bottom:8px">
+          <input type="text" id="task-input" placeholder="New assignment / exam..." onkeydown="if(event.key==='Enter') createNewTask()">
+          <button onclick="createNewTask()" class="btn-active-glow" style="width:60px">Add</button>
+        </div>
+
+        <div id="task-list-ui" style="max-height:140px;overflow-y:auto"></div>
+      </div>
+
+      <!-- ==================== 6. QUICK ACCESS (BOTTOM ROW) ==================== -->
+      <div class="card col-12">
+        <div class="card-title">
+          <div class="title-left">
+            <span>⚡ Quick Access</span>
+          </div>
+        </div>
+
+        <div class="quick-access-grid">
+          <div class="quick-btn" onclick="document.getElementById('gpa-table').scrollIntoView({behavior:'smooth'})">
+            <span class="quick-icon">📊</span>
+            <span>GPA Calculator</span>
+          </div>
+          <div class="quick-btn" onclick="document.getElementById('sim-cur-cg').focus()">
+            <span class="quick-icon">🎯</span>
+            <span>CGPA Planner</span>
+          </div>
+          <div class="quick-btn" onclick="summarize('defs')">
+            <span class="quick-icon">📖</span>
+            <span>Grade Analyzer</span>
+          </div>
+          <div class="quick-btn" onclick="showTab('sum')">
+            <span class="quick-icon">✨</span>
+            <span>AI Notes</span>
+          </div>
+          <div class="quick-btn" onclick="showTab('quiz')">
+            <span class="quick-icon">📑</span>
+            <span>Flashcards</span>
+          </div>
+          <div class="quick-btn" onclick="alert('Current Calculated GPA: ' + document.getElementById('gpa-display').innerText)">
+            <span class="quick-icon">📈</span>
+            <span>Study Stats</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== 7. MOTIVATIONAL BANNER ==================== -->
+      <div class="col-12">
+        <div class="quote-banner">
+          <span class="quote-icon">❝</span>
+          <div>
+            <strong>Your future is created by what you do today, not tomorrow.</strong>
+            <p style="font-size:0.75rem;color:var(--cyan-muted);margin-top:2px">Stay disciplined, track your academic goals, and crush your semester.</p>
+          </div>
+        </div>
+      </div>
+
     </div>
-
-    <div class="card">
-      <h2><span>📊 Semester GPA (10 Pt)</span> <button style="padding:2px 8px" onclick="addGpaRow()">+ Course</button></h2>
-      <div id="gpa-table" style="max-height:160px;overflow-y:auto;margin-bottom:0.5rem">
-        <div class="row gpa-entry">
-          <select class="gpa-val" onchange="recalcGPA()">
-            <option value="10">S (10)</option><option value="9">A+ (9)</option><option value="8">A (8)</option>
-            <option value="7">B+ (7)</option><option value="6.5">B (6.5)</option><option value="6">C+ (6)</option>
-            <option value="5">C (5)</option><option value="0">U (0)</option>
-          </select>
-          <input type="number" class="gpa-cr" value="4" min="1" max="10" placeholder="Credits" oninput="recalcGPA()" style="width:80px">
-        </div>
-      </div>
-      <div class="stat-box" id="gpa-display">10.00</div>
-    </div>
-
-    <div class="card">
-      <h2>🎯 Target CGPA Simulator</h2>
-      <div class="row">
-        <input type="number" id="sim-cur-cg" placeholder="Current CGPA" value="7.8" step="0.01" oninput="recalcSim()">
-        <input type="number" id="sim-cur-cr" placeholder="Done Credits" value="60" oninput="recalcSim()">
-      </div>
-      <div class="row">
-        <input type="number" id="sim-tgt-cg" placeholder="Target CGPA" value="8.5" step="0.01" oninput="recalcSim()">
-        <input type="number" id="sim-rem-cr" placeholder="Rem Credits" value="40" oninput="recalcSim()">
-      </div>
-      <div class="stat-box" id="sim-display">9.55</div>
-      <center style="margin-top:6px"><span id="sim-badge" class="badge" style="background:#fef3c7;color:#b45309">🔥 High Effort (Needs S/A+)</span></center>
-    </div>
-
-    <div class="card">
-      <h2>⏱️ Focus Timer</h2>
-      <div class="timer" id="timer-display">25:00</div>
-      <div style="display:flex;gap:.5rem">
-        <button style="flex:1" id="timer-toggle-btn" onclick="toggleTimer()">Start</button>
-        <button style="flex:1;background:#64748b" onclick="resetTimer()">Reset</button>
-      </div>
-    </div>
-
-    <div class="card">
-      <h2>📝 Tasks & Exam Dates</h2>
-      <div class="row">
-        <input type="text" id="task-input" placeholder="New assignment / exam..." style="margin-bottom:0" onkeydown="if(event.key==='Enter') createNewTask()">
-        <button onclick="createNewTask()">Add</button>
-      </div>
-      <ul id="task-list-ui" style="list-style:none;margin-top:.6rem;max-height:130px;overflow-y:auto"></ul>
-    </div>
-
   </div>
 
   <script>
@@ -223,8 +791,8 @@
     function setMode(mode) {
       document.getElementById('sec-paste').style.display = mode === 'paste' ? 'block' : 'none';
       document.getElementById('sec-file').style.display = mode === 'file' ? 'block' : 'none';
-      document.getElementById('btn-mode-paste').className = mode === 'paste' ? 'input-mode-btn active' : 'input-mode-btn';
-      document.getElementById('btn-mode-file').className = mode === 'file' ? 'input-mode-btn active' : 'input-mode-btn';
+      document.getElementById('btn-mode-paste').className = mode === 'paste' ? 'mode-btn active' : 'mode-btn';
+      document.getElementById('btn-mode-file').className = mode === 'file' ? 'mode-btn active' : 'mode-btn';
     }
 
     function showTab(tab) {
@@ -268,7 +836,7 @@
 
             if (!fullExtractedText.trim()) {
               alert("No digital text found in this PDF (it may contain scanned image slides). Try copying and pasting the text into the 'Paste Notes' tab!");
-              label.innerHTML = `⚠️ Scanned/Image PDF detected: <strong>${file.name}</strong>`;
+              label.innerHTML = `⚠️ Scanned/Image PDF: <strong>${file.name}</strong>`;
               return;
             }
 
@@ -281,7 +849,6 @@
         };
         fileReader.readAsArrayBuffer(file);
       } else {
-        // Plain text (.txt / .md)
         const reader = new FileReader();
         reader.onload = function(evt) {
           storeText(file.name, evt.target.result);
@@ -291,7 +858,6 @@
     }
 
     function storeText(sourceName, raw) {
-      // Filter out any leaked PDF stream bytecode markers
       let clean = raw.replace(/\/Type\s*\/[a-zA-Z]+/g, '')
                      .replace(/<<[\s\S]*?>>/g, '')
                      .replace(/\bendobj\b|\bendstream\b|\bstream\b/gi, '')
@@ -305,7 +871,6 @@
 
       if (!studySentences.length) studySentences = [studyText];
 
-      // Extract subject keywords
       const nouns = studyText.match(/\b[A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,})*\b/g) || [];
       const map = {};
       nouns.forEach(n => {
@@ -315,9 +880,10 @@
       });
       studyKeyNouns = Object.entries(map).sort((a,b) => b[1] - a[1]).map(e => e[0]);
 
-      document.getElementById('doc-status').innerText = 'Ready for Study';
-      document.getElementById('doc-status').style.background = '#d1fae5';
-      document.getElementById('doc-status').style.color = '#065f46';
+      document.getElementById('doc-status').innerText = 'Ready';
+      document.getElementById('doc-status').style.background = 'rgba(16,185,129,0.15)';
+      document.getElementById('doc-status').style.color = '#34d399';
+      document.getElementById('doc-status').style.borderColor = 'rgba(16,185,129,0.3)';
       document.getElementById('upload-status-label').innerHTML = `✅ Loaded: <strong>${sourceName}</strong> (${studySentences.length} sentences)`;
 
       summarize('points');
@@ -478,14 +1044,15 @@
     function addGpaRow() {
       const div = document.createElement('div');
       div.className = 'row gpa-entry';
+      div.style.marginBottom = '4px';
       div.innerHTML = `
         <select class="gpa-val" onchange="recalcGPA()">
           <option value="10">S (10)</option><option value="9">A+ (9)</option><option value="8">A (8)</option>
           <option value="7">B+ (7)</option><option value="6.5">B (6.5)</option><option value="6">C+ (6)</option>
           <option value="5">C (5)</option><option value="0">U (0)</option>
         </select>
-        <input type="number" class="gpa-cr" value="3" min="1" max="10" placeholder="Credits" oninput="recalcGPA()" style="width:80px">
-        <button class="remove-gpa-btn" style="background:#fee2e2;color:#ef4444;padding:0 6px">✕</button>
+        <input type="number" class="gpa-cr" value="3" min="1" max="10" placeholder="Credits" oninput="recalcGPA()" style="width:75px">
+        <button class="remove-gpa-btn" style="background:rgba(239,68,68,0.2);color:#f87171;border-color:rgba(239,68,68,0.3);padding:0 6px">✕</button>
       `;
       div.querySelector('.remove-gpa-btn').addEventListener('click', function() {
         div.remove();
@@ -509,16 +1076,16 @@
       const b = document.getElementById('sim-badge');
       if (req > 10) {
         b.innerText = '❌ Impossible (>10)';
-        b.style.background = '#fee2e2';
-        b.style.color = '#dc2626';
+        b.style.background = 'rgba(239,68,68,0.2)';
+        b.style.color = '#f87171';
       } else if (req > 9) {
         b.innerText = '🔥 High Effort (Needs S/A+)';
-        b.style.background = '#fef3c7';
-        b.style.color = '#b45309';
+        b.style.background = 'rgba(245,158,11,0.2)';
+        b.style.color = '#fbbf24';
       } else {
         b.innerText = '✅ Achievable';
-        b.style.background = '#d1fae5';
-        b.style.color = '#059669';
+        b.style.background = 'rgba(16,185,129,0.2)';
+        b.style.color = '#34d399';
       }
     }
 
@@ -564,17 +1131,21 @@
       const val = inp.value.trim();
       if (!val) return;
 
-      const li = document.createElement('li');
-      li.style = 'padding:.35rem 0;display:flex;justify-content:space-between;font-size:.85rem;border-bottom:1px solid #f1f5f9;align-items:center';
+      const li = document.createElement('div');
+      li.className = 'task-item';
       
       const span = document.createElement('span');
       span.textContent = val;
       span.style.cursor = 'pointer';
-      span.addEventListener('click', () => span.classList.toggle('task-done'));
+      span.addEventListener('click', () => li.classList.toggle('completed'));
 
       const delBtn = document.createElement('button');
       delBtn.textContent = '✕';
-      delBtn.style = 'background:none;color:#ef4444;padding:0;font-size:0.9rem';
+      delBtn.style.background = 'none';
+      delBtn.style.border = 'none';
+      delBtn.style.color = '#f87171';
+      delBtn.style.padding = '0';
+      delBtn.style.fontSize = '0.85rem';
       delBtn.addEventListener('click', () => li.remove());
 
       li.appendChild(span);
@@ -583,7 +1154,14 @@
       inp.value = '';
     }
 
-    // Initialize values on startup
+    // Initialize sample tasks from the design
+    const defaultTasks = ["DBMS Assignment (Aug 30)", "AI Quiz Prep (Sep 02)", "OS Mid Sem (Sep 10)"];
+    defaultTasks.forEach(t => {
+      document.getElementById('task-input').value = t;
+      createNewTask();
+    });
+
+    // Initialize metrics on startup
     recalcGPA();
     recalcSim();
   </script>
