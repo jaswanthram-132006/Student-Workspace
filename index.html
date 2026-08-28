@@ -1,9 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1.0">
-  <title>Student Workspace + AI Study Engine</title>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Student Workspace & Study Engine</title>
   
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -19,12 +18,15 @@
       --text: #0f172a;
       --text-muted: #64748b;
       --danger: #ef4444;
+      --danger-light: #fee2e2;
       --success: #10b981;
+      --success-light: #d1fae5;
       --warning: #f59e0b;
+      --warning-light: #fef3c7;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
-    body { background: var(--bg); color: var(--text); padding: 1.2rem; max-width: 1100px; margin: auto; }
+    body { background: var(--bg); color: var(--text); padding: 1.2rem; max-width: 1050px; margin: auto; }
     
     header { text-align: center; margin-bottom: 1.5rem; }
     header h1 { font-size: 1.6rem; color: var(--primary); font-weight: 800; }
@@ -33,7 +35,7 @@
     .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.2rem; }
     .card { background: var(--surface); border-radius: 16px; padding: 1.2rem; box-shadow: 0 4px 12px rgba(0,0,0,0.04); border: 1px solid var(--border); display: flex; flex-direction: column; }
     .card-span-2 { grid-column: span 1; }
-    @media (min-width: 768px) { .card-span-2 { grid-column: span 2; } }
+    @media (min-width: 800px) { .card-span-2 { grid-column: span 2; } }
 
     .card h2 { font-size: 1rem; margin-bottom: 0.8rem; color: #1e293b; display: flex; justify-content: space-between; align-items: center; font-weight: 700; }
     
@@ -44,89 +46,97 @@
     button:hover { background: var(--primary-hover); }
 
     .row { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; align-items: center; }
-    .stat-box { background: var(--primary-light); color: var(--primary); font-weight: 800; font-size: 1.5rem; text-align: center; padding: 0.7rem; border-radius: 12px; margin-top: auto; }
+    .stat-box { background: var(--primary-light); color: var(--primary); font-weight: 800; font-size: 1.4rem; text-align: center; padding: 0.7rem; border-radius: 12px; margin-top: auto; }
     .badge { font-size: 0.75rem; padding: 4px 8px; border-radius: 6px; font-weight: 600; display: inline-block; }
     .timer { font-size: 2.2rem; font-weight: 800; text-align: center; margin: 0.6rem 0; font-variant-numeric: tabular-nums; }
     .task-done { text-decoration: line-through; color: var(--text-muted); }
 
-    /* AI Assistant Tabs & Interface */
+    /* AI Studio Styles */
     .ai-tabs { display: flex; gap: 0.4rem; margin-bottom: 0.8rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; overflow-x: auto; }
-    .ai-tab-btn { background: transparent; color: var(--text-muted); border: 1px solid transparent; padding: 4px 10px; border-radius: 8px; font-size: 0.8rem; }
+    .ai-tab-btn { background: transparent; color: var(--text-muted); border: 1px solid transparent; padding: 5px 12px; border-radius: 8px; font-size: 0.82rem; }
     .ai-tab-btn.active { background: var(--primary-light); color: var(--primary); border-color: var(--border); font-weight: 700; }
     
     .drop-zone { border: 2px dashed #cbd5e1; border-radius: 12px; padding: 1.2rem; text-align: center; background: #f8fafc; cursor: pointer; margin-bottom: 0.8rem; transition: 0.2s; }
     .drop-zone:hover { border-color: var(--primary); background: var(--primary-light); }
     
-    .ai-output { background: #f8fafc; border: 1px solid var(--border); border-radius: 12px; padding: 0.8rem; font-size: 0.88rem; line-height: 1.5; max-height: 230px; overflow-y: auto; white-space: pre-wrap; word-break: break-word; }
+    .ai-output { background: #f8fafc; border: 1px solid var(--border); border-radius: 12px; padding: 1rem; font-size: 0.88rem; line-height: 1.55; max-height: 300px; overflow-y: auto; white-space: pre-wrap; word-break: break-word; }
     
-    .quiz-card { background: #ffffff; border: 1px solid var(--border); border-radius: 10px; padding: 0.8rem; margin-bottom: 0.6rem; }
-    .quiz-opt { display: block; margin: 4px 0; padding: 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); cursor: pointer; font-size: 0.8rem; }
+    .quiz-card { background: #ffffff; border: 1px solid var(--border); border-radius: 10px; padding: 0.9rem; margin-bottom: 0.8rem; }
+    .quiz-opt { display: block; margin: 5px 0; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); cursor: pointer; font-size: 0.82rem; transition: 0.15s; }
     .quiz-opt:hover { border-color: var(--primary); background: var(--primary-light); }
-    .quiz-opt.correct { background: #d1fae5; border-color: var(--success); color: #065f46; font-weight: bold; }
-    .quiz-opt.wrong { background: #fee2e2; border-color: var(--danger); color: #991b1b; }
+    .quiz-opt.correct { background: var(--success-light); border-color: var(--success); color: #065f46; font-weight: 700; }
+    .quiz-opt.wrong { background: var(--danger-light); border-color: var(--danger); color: #991b1b; }
 
-    .export-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-top: 0.8rem; }
-    .btn-export { background: #f1f5f9; color: var(--text); border: 1px solid var(--border); padding: 8px; font-size: 0.8rem; }
-    .btn-export:hover { background: #e2e8f0; color: var(--primary); }
+    .export-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem; margin-top: 0.8rem; }
+    .btn-export { background: #f1f5f9; color: var(--text); border: 1px solid var(--border); padding: 10px 8px; font-size: 0.82rem; }
+    .btn-export:hover { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
   </style>
 </head>
 <body>
 
   <header>
     <h1>🎓 Student Workspace & AI Study Engine</h1>
-    <p>Read & Summarize PDFs, Generate Mock Tests, Export Docs & Track Academics</p>
+    <p>Contextual PDF Summaries, Mock Tests with Custom Question Counts & Formatted Document Exports</p>
   </header>
 
   <div class="grid">
 
     <div class="card card-span-2">
       <h2>
-        <span>✨ Inbuilt AI Study & Document Assistant</span>
+        <span>✨ Inbuilt AI Study & Document Engine</span>
         <span id="doc-status" class="badge" style="background:#e0e7ff;color:#4338ca">No File Loaded</span>
       </h2>
 
       <div class="drop-zone" onclick="document.getElementById('pdf-input').click()">
-        <span id="upload-label">📄 Click or Drop a <strong>PDF / TXT Document</strong> here</span>
+        <span id="upload-label">📄 Click or Drop a <strong>PDF / Lecture Note TXT</strong> here</span>
         <input type="file" id="pdf-input" accept=".pdf,.txt" style="display:none" onchange="handleFileUpload(event)">
       </div>
 
       <div class="ai-tabs">
-        <button class="ai-tab-btn active" onclick="switchAITab('tab-summary')">📝 Smart Summary</button>
-        <button class="ai-tab-btn" onclick="switchAITab('tab-quiz')">🎯 Mock Quiz / Test</button>
-        <button class="ai-tab-btn" onclick="switchAITab('tab-chat')">💬 Q&A Search</button>
-        <button class="ai-tab-btn" onclick="switchAITab('tab-export')">📤 Export Docs</button>
+        <button class="ai-tab-btn active" onclick="switchAITab('tab-summary')">📝 Smart Notes & Summary</button>
+        <button class="ai-tab-btn" onclick="switchAITab('tab-quiz')">🎯 Custom Mock Quiz</button>
+        <button class="ai-tab-btn" onclick="switchAITab('tab-chat')">🔍 Concept Search</button>
+        <button class="ai-tab-btn" onclick="switchAITab('tab-export')">📤 Formatted Exports</button>
       </div>
 
       <div id="tab-summary" class="ai-tab-content">
         <div class="row">
-          <button onclick="generateSummary(3)" style="padding:4px 8px;font-size:0.78rem">Short Summary</button>
-          <button onclick="generateSummary(7)" style="padding:4px 8px;font-size:0.78rem">Detailed Notes</button>
-          <button onclick="extractKeyTerms()" style="padding:4px 8px;font-size:0.78rem">Key Formulae & Terms</button>
+          <button onclick="generateStructuredNotes('outline')" style="padding:5px 10px;font-size:0.8rem">📑 Core Outline</button>
+          <button onclick="generateStructuredNotes('definitions')" style="padding:5px 10px;font-size:0.8rem">📖 Key Definitions</button>
+          <button onclick="generateStructuredNotes('cheat-sheet')" style="padding:5px 10px;font-size:0.8rem">⚡ Exam Revision Sheet</button>
         </div>
-        <div class="ai-output" id="summary-output">Upload a PDF above and click a summary option to analyze your study material.</div>
+        <div class="ai-output" id="summary-output">Upload a PDF above to extract clean definitions, bullet points, and core exam highlights.</div>
       </div>
 
       <div id="tab-quiz" class="ai-tab-content" style="display:none">
-        <div class="row">
-          <button onclick="generateQuiz()" style="width:100%">⚡ Generate 5 Mock Quiz Questions from PDF</button>
+        <div class="row" style="background:var(--bg);padding:8px;border-radius:10px;margin-bottom:0.8rem">
+          <label style="font-size:0.82rem;font-weight:700;color:var(--text-muted);white-space:nowrap">Question Count:</label>
+          <select id="quiz-count" style="max-width:140px;margin-bottom:0">
+            <option value="3">3 Questions</option>
+            <option value="5" selected>5 Questions</option>
+            <option value="10">10 Questions</option>
+            <option value="15">15 Questions</option>
+          </select>
+          <button onclick="generateCustomQuiz()" style="flex:1">⚡ Generate Mock Test</button>
         </div>
-        <div class="ai-output" id="quiz-output" style="max-height:280px">Click above to generate mock test questions based on the uploaded document.</div>
+        <div id="quiz-scorecard" style="display:none;margin-bottom:0.8rem" class="stat-box">Score: <span id="score-val">0</span></div>
+        <div class="ai-output" id="quiz-output" style="max-height:320px">Select how many questions you want and click Generate.</div>
       </div>
 
       <div id="tab-chat" class="ai-tab-content" style="display:none">
         <div class="row">
-          <input type="text" id="ai-query" placeholder="Ask a question or search key topics in the PDF..." onkeydown="if(event.key==='Enter') searchInDoc()">
+          <input type="text" id="ai-query" placeholder="Type a concept, formula, or keyword to find context..." onkeydown="if(event.key==='Enter') searchInDoc()">
           <button onclick="searchInDoc()" style="width:90px">Search</button>
         </div>
-        <div class="ai-output" id="chat-output">Ask any topic or concept contained in your uploaded document.</div>
+        <div class="ai-output" id="chat-output">Search any term or formula from your uploaded lecture notes.</div>
       </div>
 
       <div id="tab-export" class="ai-tab-content" style="display:none">
-        <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:0.5rem">Convert your document analysis, summary, and notes into editable formats:</p>
+        <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:0.5rem">Export structured revision sheets and Q&A flashcard tables:</p>
         <div class="export-grid">
-          <button class="btn-export" onclick="exportToWord()">📄 Word (.doc)</button>
-          <button class="btn-export" onclick="exportToExcel()">📊 Excel (.csv)</button>
-          <button class="btn-export" onclick="exportToPDF()">📑 PDF (.pdf)</button>
+          <button class="btn-export" onclick="exportFormattedWord()">📄 Word Doc (.doc)</button>
+          <button class="btn-export" onclick="exportStructuredExcel()">📊 Excel Q&A Table (.csv)</button>
+          <button class="btn-export" onclick="exportStyledPDF()">📑 Clean Study PDF (.pdf)</button>
         </div>
       </div>
     </div>
@@ -172,7 +182,7 @@
     <div class="card">
       <h2>📝 Tasks & Exam Dates</h2>
       <div class="row">
-        <input type="text" id="t-in" placeholder="Assignment / Exam..." style="margin-bottom:0">
+        <input type="text" id="t-in" placeholder="New assignment / exam date..." style="margin-bottom:0">
         <button onclick="addTask()">Add</button>
       </div>
       <ul id="t-list" style="list-style:none;margin-top:.6rem;max-height:130px;overflow-y:auto"></ul>
@@ -181,12 +191,17 @@
   </div>
 
   <script>
-    /* ================= AI STUDY ENGINE & PDF PROCESSOR ================= */
+    /* ================= AI STUDY ENGINE & PARSER ================= */
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
     
-    let docText = "";
-    let docSentences = [];
-    let activeSummaryText = "";
+    let rawDocText = "";
+    let cleanSentences = [];
+    let extractedDefinitions = [];
+    let extractedKeyNouns = [];
+    let activeExportContent = "";
+    let currentQuizTotal = 0;
+    let currentQuizScore = 0;
+    let loadedFileName = "Study_Material";
 
     function switchAITab(tabId) {
       document.querySelectorAll('.ai-tab-btn').forEach(b => b.classList.remove('active'));
@@ -198,8 +213,9 @@
     async function handleFileUpload(e) {
       const file = e.target.files[0];
       if (!file) return;
+      loadedFileName = file.name.replace(/\.[^/.]+$/, "");
 
-      document.getElementById('upload-label').innerHTML = `⏳ Loading <strong>${file.name}</strong>...`;
+      document.getElementById('upload-label').innerHTML = `⏳ Reading & Parsing <strong>${file.name}</strong>...`;
       
       if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
         const fileReader = new FileReader();
@@ -212,11 +228,11 @@
               const page = await pdf.getPage(i);
               const textContent = await page.getTextContent();
               const pageText = textContent.items.map(item => item.str).join(' ');
-              fullText += pageText + " ";
+              fullText += pageText + "\n";
             }
             processExtractedText(file.name, fullText);
           } catch(err) {
-            alert('Error reading PDF. Please ensure it contains selectable text.');
+            alert('Error parsing PDF. Make sure the PDF contains readable text.');
           }
         };
         fileReader.readAsArrayBuffer(file);
@@ -230,87 +246,96 @@
     }
 
     function processExtractedText(filename, text) {
-      docText = text.replace(/\s+/g, ' ').trim();
-      docSentences = docText.match(/[^.!?]+[.!?]+/g) || [docText];
+      rawDocText = text.replace(/\s+/g, ' ').trim();
       
-      document.getElementById('upload-label').innerHTML = `✅ Loaded: <strong>${filename}</strong> (${docSentences.length} sentences)`;
-      document.getElementById('doc-status').innerText = 'Document Ready';
+      // Clean sentence splitter
+      cleanSentences = rawDocText.match(/[^.!?]+[.!?]+/g) || [rawDocText];
+      cleanSentences = cleanSentences.map(s => s.trim()).filter(s => s.length > 25);
+
+      // Extract Definition Sentences (e.g., "X is defined as...", "X is known as...", "X refers to...")
+      const defRegex = /\b(is defined as|refers to|is known as|is called|denotes|represents|means|is the process of)\b/i;
+      extractedDefinitions = cleanSentences.filter(s => defRegex.test(s));
+
+      // Extract subject-specific proper nouns and multi-word terms for authentic quiz distractors
+      const termMatches = rawDocText.match(/\b[A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,})*\b/g) || [];
+      const countMap = {};
+      termMatches.forEach(t => {
+        if (!/^(The|This|These|That|When|Where|There|Then|However|Therefore|For|And|With|From|Into)$/i.test(t)) {
+          countMap[t] = (countMap[t] || 0) + 1;
+        }
+      });
+      extractedKeyNouns = Object.entries(countMap).sort((a,b) => b[1] - a[1]).map(e => e[0]);
+
+      document.getElementById('upload-label').innerHTML = `✅ Loaded: <strong>${filename}</strong> (${cleanSentences.length} key sentences parsed)`;
+      document.getElementById('doc-status').innerText = 'Ready for Study';
       document.getElementById('doc-status').style.background = '#d1fae5';
       document.getElementById('doc-status').style.color = '#065f46';
       
-      generateSummary(4);
+      generateStructuredNotes('outline');
     }
 
-    /* Client-side NLP Extractive Summarization */
-    function generateSummary(sentenceCount) {
-      if (!docText) { alert("Please upload a PDF or TXT file first!"); return; }
-      
-      const words = docText.toLowerCase().match(/\b[a-z]{3,}\b/g) || [];
-      const stopWords = new Set(['the','and','for','that','this','with','from','have','are','was','were','which','your','their','will','about']);
-      const freqMap = {};
-      
-      words.forEach(w => {
-        if (!stopWords.has(w)) freqMap[w] = (freqMap[w] || 0) + 1;
-      });
+    /* Upgraded Contextual Summary Generator */
+    function generateStructuredNotes(mode) {
+      if (!cleanSentences.length) { alert("Please upload a PDF or TXT lecture note first!"); return; }
 
-      const scoredSentences = docSentences.map(sent => {
-        const sentWords = sent.toLowerCase().match(/\b[a-z]{3,}\b/g) || [];
-        let score = 0;
-        sentWords.forEach(w => { if (freqMap[w]) score += freqMap[w]; });
-        return { text: sent.trim(), score: score / (sentWords.length || 1) };
-      });
-
-      scoredSentences.sort((a, b) => b.score - a.score);
-      const topSentences = scoredSentences.slice(0, sentenceCount).map(s => s.text);
-      
-      activeSummaryText = `📌 Key Summary Highlights:\n\n• ` + topSentences.join('\n\n• ');
-      document.getElementById('summary-output').innerText = activeSummaryText;
-    }
-
-    function extractKeyTerms() {
-      if (!docText) { alert("Please upload a PDF first!"); return; }
-      const words = docText.match(/\b[A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,})*\b|\b[a-z]{4,}\b/g) || [];
-      const counts = {};
-      words.forEach(w => counts[w] = (counts[w] || 0) + 1);
-      const sorted = Object.entries(counts).sort((a,b) => b[1] - a[1]).slice(0, 15);
-      
-      activeSummaryText = "🔑 Top Important Concepts & Keywords in Document:\n\n" + 
-        sorted.map(([term, count], i) => `${i+1}. ${term} (mentioned ${count} times)`).join('\n');
-      document.getElementById('summary-output').innerText = activeSummaryText;
-    }
-
-    /* Client-side Mock Quiz Generator */
-    function generateQuiz() {
-      if (!docSentences.length) { alert("Please upload a PDF first!"); return; }
-      
-      const suitableSentences = docSentences.filter(s => s.length > 40 && s.length < 140);
-      if (suitableSentences.length < 3) {
-        document.getElementById('quiz-output').innerHTML = "Document is too short to generate a mock test.";
-        return;
+      let out = "";
+      if (mode === 'definitions') {
+        if (extractedDefinitions.length > 0) {
+          out = `📖 KEY DEFINITIONS & CORE CONCEPTS:\n\n` + 
+            extractedDefinitions.slice(0, 10).map((d, i) => `${i+1}. ${d}`).join('\n\n');
+        } else {
+          out = `📖 KEY CONCEPTS & HIGHLIGHTS:\n\n` + 
+            cleanSentences.slice(0, 8).map((s, i) => `${i+1}. ${s}`).join('\n\n');
+        }
+      } else if (mode === 'cheat-sheet') {
+        const keywords = extractedKeyNouns.slice(0, 12);
+        out = `⚡ QUICK EXAM REVISION SHEET:\n\n` +
+          `📌 High Frequency Topics:\n• ` + keywords.join('\n• ') + `\n\n` +
+          `📌 Core Takeaways:\n• ` + cleanSentences.slice(0, 6).join('\n• ');
+      } else {
+        // Outline mode: Group sentences in cohesive readable chunks
+        const highlights = cleanSentences.slice(0, 8);
+        out = `📑 STRUCTURED LECTURE SUMMARY:\n\n` + 
+          highlights.map((h, i) => `[Topic ${i+1}] ${h}`).join('\n\n');
       }
 
+      activeExportContent = out;
+      document.getElementById('summary-output').innerText = out;
+    }
+
+    /* Upgraded Mock Quiz Generator with Custom Count & Genuine Distractors */
+    function generateCustomQuiz() {
+      if (!cleanSentences.length) { alert("Please upload a PDF first!"); return; }
+      
+      const count = parseInt(document.getElementById('quiz-count').value);
+      currentQuizTotal = count;
+      currentQuizScore = 0;
+      
+      // Prefer definition sentences, otherwise pick substantive sentences
+      let pool = extractedDefinitions.length >= count ? [...extractedDefinitions] : [...cleanSentences];
+      pool = pool.sort(() => 0.5 - Math.random()).slice(0, count);
+
       let quizHtml = "";
-      const shuffled = suitableSentences.sort(() => 0.5 - Math.random()).slice(0, 5);
+      pool.forEach((sentence, idx) => {
+        // Find candidate word to turn into blank
+        const words = sentence.split(' ').filter(w => w.length > 4 && !/^(about|which|there|their|these|where|could|would|should|other|being)$/i.test(w));
+        const targetWord = words[Math.floor(Math.random() * words.length)].replace(/[.,/#!$%^&*;:{}=\-_`~()]/g,"");
+        const blankQuestion = sentence.replace(new RegExp(`\\b${targetWord}\\b`, 'i'), "________");
 
-      shuffled.forEach((sentence, idx) => {
-        const words = sentence.trim().split(' ').filter(w => w.length > 4 && !/^(about|which|there|their|these)$/i.test(w));
-        if (!words.length) return;
-        
-        const answerWord = words[Math.floor(Math.random() * words.length)].replace(/[.,/#!$%^&*;:{}=\-_`~()]/g,"");
-        const blankSentence = sentence.replace(answerWord, "__________");
+        // Pick authentic distractors from the PDF's own noun pool
+        let distractors = extractedKeyNouns.filter(n => n.toLowerCase() !== targetWord.toLowerCase()).slice(0, 3);
+        while (distractors.length < 3) {
+          distractors.push(["Parameter", "Magnitude", "Coefficient", "Threshold"][distractors.length]);
+        }
 
-        const distractors = ["Constant", "Variable", "Theorem", "Function", "System", "Phase", "Method"]
-          .filter(d => d.toLowerCase() !== answerWord.toLowerCase())
-          .sort(() => 0.5 - Math.random()).slice(0, 3);
-        
-        const options = [answerWord, ...distractors].sort(() => 0.5 - Math.random());
+        const options = [targetWord, ...distractors].sort(() => 0.5 - Math.random());
 
         quizHtml += `
-          <div class="quiz-card">
-            <strong>Q${idx+1}:</strong> ${blankSentence}
-            <div style="margin-top:6px">
+          <div class="quiz-card" id="q-card-${idx}">
+            <p><strong>Q${idx+1}:</strong>${blankQuestion}</p>
+            <div style="margin-top:8px">
               ${options.map(opt => `
-                <div class="quiz-opt" onclick="checkAnswer(this, '${opt === answerWord}')">
+                <div class="quiz-opt" onclick="submitQuizAnswer(this, ${idx}, '${opt.replace(/'/g, "\\'") === targetWord.replace(/'/g, "\\'")}', '${targetWord.replace(/'/g, "\\'")}')">
                   ${opt}
                 </div>
               `).join('')}
@@ -319,75 +344,117 @@
         `;
       });
 
+      document.getElementById('score-val').innerText = `0 / ${currentQuizTotal}`;
+      document.getElementById('quiz-scorecard').style.display = 'block';
       document.getElementById('quiz-output').innerHTML = quizHtml;
     }
 
-    function checkAnswer(el, isCorrect) {
+    function submitQuizAnswer(selectedEl, qIndex, isCorrect, correctWord) {
+      const card = document.getElementById(`q-card-${qIndex}`);
+      if (card.dataset.answered) return; // Prevent double clicking
+      card.dataset.answered = "true";
+
+      const allOpts = card.querySelectorAll('.quiz-opt');
+      allOpts.forEach(opt => opt.style.pointerEvents = 'none');
+
       if (isCorrect === 'true') {
-        el.classList.add('correct');
-        el.innerHTML += " ✅ (Correct)";
+        selectedEl.classList.add('correct');
+        selectedEl.innerHTML += " ✅ Correct!";
+        currentQuizScore++;
       } else {
-        el.classList.add('wrong');
-        el.innerHTML += " ❌";
+        selectedEl.classList.add('wrong');
+        selectedEl.innerHTML += ` ❌ (Correct: <strong>${correctWord}</strong>)`;
       }
+
+      document.getElementById('score-val').innerText = `${currentQuizScore} / ${currentQuizTotal} (${Math.round((currentQuizScore/currentQuizTotal)*100)}%)`;
     }
 
-    /* Q&A Keyword Search */
+    /* Q&A / Concept Search */
     function searchInDoc() {
       const q = document.getElementById('ai-query').value.trim().toLowerCase();
-      if (!q || !docSentences.length) return;
+      if (!q || !cleanSentences.length) return;
       
-      const matches = docSentences.filter(s => s.toLowerCase().includes(q));
+      const matches = cleanSentences.filter(s => s.toLowerCase().includes(q));
       if (matches.length) {
-        document.getElementById('chat-output').innerHTML = `🔍 Found <strong>${matches.length}</strong> matching sections:<br><br>` + 
-          matches.slice(0, 4).map(m => `• ${m.trim()}`).join('<br><br>');
+        document.getElementById('chat-output').innerHTML = `🔍 Found <strong>${matches.length}</strong> related sections:<br><br>` + 
+          matches.slice(0, 5).map(m => `• ${m.trim()}`).join('<br><br>');
       } else {
-        document.getElementById('chat-output').innerHTML = `No direct match found for "<strong>${q}</strong>". Try searching related terms.`;
+        document.getElementById('chat-output').innerHTML = `No exact matches found for "<strong>${q}</strong>". Try searching for individual key terms.`;
       }
     }
 
-    /* ================= DOCUMENT EXPORTERS ================= */
-    function exportToWord() {
-      const content = activeSummaryText || docText.slice(0, 2000) || "Student Workspace Study Notes";
-      const blob = new Blob(['\ufeff' + content], { type: 'application/msword' });
+    /* ================= PROFESSIONAL DOCUMENT EXPORTERS ================= */
+    function exportFormattedWord() {
+      const content = activeExportContent || rawDocText.slice(0, 3000) || "Student Revision Notes";
+      const formattedHTML = `
+        <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+        <head><title>${loadedFileName} Study Notes</title>
+        <style>
+          body { font-family: Calibri, Arial, sans-serif; line-height: 1.6; padding: 20px; }
+          h1 { color: #4f46e5; border-bottom: 2px solid #4f46e5; padding-bottom: 6px; }
+          p { margin-bottom: 12px; }
+        </style>
+        </head>
+        <body>
+          <h1>🎓 ${loadedFileName} - Study & Revision Sheet</h1>
+          <p><em>Generated by Student Workspace AI Study Engine</em></p>
+          <hr/>
+          <pre style="font-family:Calibri,Arial,sans-serif;white-space:pre-wrap;">${content}</pre>
+        </body>
+        </html>
+      `;
+      const blob = new Blob(['\ufeff' + formattedHTML], { type: 'application/msword' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'Study_Notes.doc';
+      a.download = `${loadedFileName}_Notes.doc`;
       a.click();
     }
 
-    function exportToExcel() {
-      let csv = "Item,Details\n";
-      csv += `"Document Status","${docSentences.length} Sentences Processed"\n`;
-      csv += `"Semester GPA","${document.getElementById('gpa-out').innerText}"\n`;
-      csv += `"Target CGPA Simulator","Required: ${document.getElementById('sim-out').innerText}"\n`;
+    function exportStructuredExcel() {
+      let csv = "Category,Content,Status\n";
+      csv += `"Document Name","${loadedFileName}","Processed"\n`;
+      csv += `"Key Sentences Count","${cleanSentences.length}","Parsed"\n`;
+      csv += `"Semester GPA","${document.getElementById('gpa-out').innerText}","Calculated"\n`;
+      csv += `"Target CGPA Req","${document.getElementById('sim-out').innerText}","Simulated"\n\n`;
       
+      csv += `"Index","Extracted Concept / Definition","Subject Topic"\n`;
+      cleanSentences.slice(0, 15).forEach((sent, idx) => {
+        csv += `"${idx+1}","${sent.replace(/"/g, '""')}","${loadedFileName}"\n`;
+      });
+
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'Student_Report.csv';
+      a.download = `${loadedFileName}_Flashcards.csv`;
       a.click();
     }
 
-    function exportToPDF() {
+    function exportStyledPDF() {
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
+      
       doc.setFont("helvetica", "bold");
       doc.setFontSize(16);
-      doc.text("Student Study & Analysis Report", 14, 20);
+      doc.setTextColor(79, 70, 229);
+      doc.text(`${loadedFileName} - Study Guide`, 14, 20);
+      
+      doc.setFontSize(10);
+      doc.setTextColor(100, 116, 139);
+      doc.text(`Generated on ${new Date().toLocaleDateString()} | Student Workspace`, 14, 26);
+      doc.line(14, 28, 196, 28);
       
       doc.setFont("helvetica", "normal");
-      doc.setFontSize(10);
-      const textToPrint = activeSummaryText || docText.slice(0, 1000) || "No summary generated yet.";
+      doc.setTextColor(15, 23, 42);
+      const textToPrint = activeExportContent || rawDocText.slice(0, 2500) || "No summary generated yet.";
       const splitText = doc.splitTextToSize(textToPrint, 180);
-      doc.text(splitText, 14, 32);
+      doc.text(splitText, 14, 36);
       
-      doc.save("Study_Summary.pdf");
+      doc.save(`${loadedFileName}_Summary.pdf`);
     }
 
-    /* ================= ACADEMIC CALCULATORS & TIMER ================= */
+    /* ================= 10-POINT ACADEMIC ENGINE ================= */
     function calcGPA(){
       let pts=0, crds=0;
       document.querySelectorAll('.gpa-r').forEach(r=>{
@@ -430,10 +497,4 @@
       if(!val) return;
       const li = document.createElement('li');
       li.style = 'padding:.3rem 0;display:flex;justify-content:space-between;font-size:.85rem;border-bottom:1px solid #f1f5f9';
-      li.innerHTML = `<span onclick="this.classList.toggle('task-done')" style="cursor:pointer">${val}</span><button onclick="this.parentElement.remove()" style="background:none;color:#ef4444;padding:0">✕</button>`;
-      document.getElementById('t-list').appendChild(li);
-      document.getElementById('t-in').value = '';
-    }
-  </script>
-</body>
-</html>
+      li.innerHTML = `<span onclick="this.classList.toggle('task-done')" style="cursor:pointer">${val}</span><button onclick="this.parentElement.remove()" style="background:none;color:#ef
