@@ -2,8 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Student Study Hub</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Student Workspace + AI Study Engine</title>
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
   <style>
     :root {
       --primary: #4f46e5;
@@ -17,700 +21,419 @@
       --danger: #ef4444;
       --success: #10b981;
       --warning: #f59e0b;
-      --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-      --radius: 16px;
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+    body { background: var(--bg); color: var(--text); padding: 1.2rem; max-width: 1100px; margin: auto; }
+    
+    header { text-align: center; margin-bottom: 1.5rem; }
+    header h1 { font-size: 1.6rem; color: var(--primary); font-weight: 800; }
+    header p { font-size: 0.9rem; color: var(--text-muted); margin-top: 4px; }
 
-    body {
-      background: var(--bg);
-      color: var(--text);
-      padding: 2rem 1.5rem;
-      min-height: 100vh;
-    }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.2rem; }
+    .card { background: var(--surface); border-radius: 16px; padding: 1.2rem; box-shadow: 0 4px 12px rgba(0,0,0,0.04); border: 1px solid var(--border); display: flex; flex-direction: column; }
+    .card-span-2 { grid-column: span 1; }
+    @media (min-width: 768px) { .card-span-2 { grid-column: span 2; } }
 
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-    }
+    .card h2 { font-size: 1rem; margin-bottom: 0.8rem; color: #1e293b; display: flex; justify-content: space-between; align-items: center; font-weight: 700; }
+    
+    input, select, button, textarea { padding: 0.55rem 0.75rem; border-radius: 10px; border: 1px solid var(--border); font-size: 0.85rem; outline: none; }
+    input, select, textarea { width: 100%; background: var(--bg); color: var(--text); }
+    input:focus, select:focus, textarea:focus { border-color: var(--primary); background: #fff; }
+    button { background: var(--primary); color: #fff; border: none; cursor: pointer; font-weight: 600; transition: 0.15s ease; }
+    button:hover { background: var(--primary-hover); }
 
-    /* Header */
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 2rem;
-      flex-wrap: wrap;
-      gap: 1rem;
-    }
+    .row { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; align-items: center; }
+    .stat-box { background: var(--primary-light); color: var(--primary); font-weight: 800; font-size: 1.5rem; text-align: center; padding: 0.7rem; border-radius: 12px; margin-top: auto; }
+    .badge { font-size: 0.75rem; padding: 4px 8px; border-radius: 6px; font-weight: 600; display: inline-block; }
+    .timer { font-size: 2.2rem; font-weight: 800; text-align: center; margin: 0.6rem 0; font-variant-numeric: tabular-nums; }
+    .task-done { text-decoration: line-through; color: var(--text-muted); }
 
-    .header-title h1 {
-      font-size: 1.85rem;
-      font-weight: 800;
-      color: var(--text);
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
+    /* AI Assistant Tabs & Interface */
+    .ai-tabs { display: flex; gap: 0.4rem; margin-bottom: 0.8rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; overflow-x: auto; }
+    .ai-tab-btn { background: transparent; color: var(--text-muted); border: 1px solid transparent; padding: 4px 10px; border-radius: 8px; font-size: 0.8rem; }
+    .ai-tab-btn.active { background: var(--primary-light); color: var(--primary); border-color: var(--border); font-weight: 700; }
+    
+    .drop-zone { border: 2px dashed #cbd5e1; border-radius: 12px; padding: 1.2rem; text-align: center; background: #f8fafc; cursor: pointer; margin-bottom: 0.8rem; transition: 0.2s; }
+    .drop-zone:hover { border-color: var(--primary); background: var(--primary-light); }
+    
+    .ai-output { background: #f8fafc; border: 1px solid var(--border); border-radius: 12px; padding: 0.8rem; font-size: 0.88rem; line-height: 1.5; max-height: 230px; overflow-y: auto; white-space: pre-wrap; word-break: break-word; }
+    
+    .quiz-card { background: #ffffff; border: 1px solid var(--border); border-radius: 10px; padding: 0.8rem; margin-bottom: 0.6rem; }
+    .quiz-opt { display: block; margin: 4px 0; padding: 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); cursor: pointer; font-size: 0.8rem; }
+    .quiz-opt:hover { border-color: var(--primary); background: var(--primary-light); }
+    .quiz-opt.correct { background: #d1fae5; border-color: var(--success); color: #065f46; font-weight: bold; }
+    .quiz-opt.wrong { background: #fee2e2; border-color: var(--danger); color: #991b1b; }
 
-    .header-title p {
-      color: var(--text-muted);
-      font-size: 0.95rem;
-      margin-top: 4px;
-    }
-
-    .quote-box {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      padding: 0.6rem 1rem;
-      border-radius: 12px;
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      max-width: 380px;
-      font-style: italic;
-    }
-
-    /* Dashboard Layout */
-    .dashboard-grid {
-      display: grid;
-      grid-template-columns: repeat(12, 1fr);
-      gap: 1.5rem;
-    }
-
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1.5rem;
-      box-shadow: var(--card-shadow);
-      display: flex;
-      flex-direction: column;
-    }
-
-    .card-title {
-      font-size: 1.1rem;
-      font-weight: 700;
-      margin-bottom: 1rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    /* Column spans */
-    .col-4 { grid-column: span 4; }
-    .col-6 { grid-column: span 6; }
-    .col-8 { grid-column: span 8; }
-    .col-12 { grid-column: span 12; }
-
-    @media (max-width: 960px) {
-      .col-4, .col-6, .col-8 { grid-column: span 12; }
-    }
-
-    /* Widget 1: Pomodoro */
-    .timer-modes {
-      display: flex;
-      gap: 0.5rem;
-      margin-bottom: 1.5rem;
-      background: var(--bg);
-      padding: 4px;
-      border-radius: 10px;
-    }
-
-    .timer-mode-btn {
-      flex: 1;
-      padding: 6px;
-      border: none;
-      background: transparent;
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: var(--text-muted);
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.15s ease;
-    }
-
-    .timer-mode-btn.active {
-      background: var(--surface);
-      color: var(--primary);
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    }
-
-    .timer-display {
-      font-size: 3.5rem;
-      font-weight: 800;
-      text-align: center;
-      margin: 1rem 0;
-      font-variant-numeric: tabular-nums;
-      color: var(--text);
-    }
-
-    .timer-controls {
-      display: flex;
-      gap: 0.75rem;
-      justify-content: center;
-    }
-
-    .btn {
-      padding: 0.6rem 1.2rem;
-      border-radius: 10px;
-      border: none;
-      font-weight: 600;
-      font-size: 0.9rem;
-      cursor: pointer;
-      transition: all 0.15s ease;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
-    }
-
-    .btn-primary { background: var(--primary); color: #fff; }
-    .btn-primary:hover { background: var(--primary-hover); }
-    .btn-secondary { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
-    .btn-secondary:hover { background: var(--border); }
-    .btn-danger-light { background: #fee2e2; color: var(--danger); }
-    .btn-danger-light:hover { background: #fecaca; }
-
-    /* Widget 2: Tasks */
-    .task-form {
-      display: flex;
-      gap: 0.5rem;
-      margin-bottom: 1rem;
-      flex-wrap: wrap;
-    }
-
-    .input-field {
-      padding: 0.6rem 0.8rem;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      font-size: 0.9rem;
-      outline: none;
-      background: var(--bg);
-      flex: 1;
-      min-width: 140px;
-    }
-
-    .input-field:focus {
-      border-color: var(--primary);
-      background: var(--surface);
-    }
-
-    .task-list {
-      list-style: none;
-      overflow-y: auto;
-      max-height: 250px;
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-
-    .task-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0.6rem 0.8rem;
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      font-size: 0.9rem;
-    }
-
-    .task-left {
-      display: flex;
-      align-items: center;
-      gap: 0.6rem;
-    }
-
-    .task-item.completed span {
-      text-decoration: line-through;
-      color: var(--text-muted);
-    }
-
-    .tag {
-      font-size: 0.75rem;
-      padding: 2px 6px;
-      border-radius: 6px;
-      font-weight: 600;
-      background: var(--primary-light);
-      color: var(--primary);
-    }
-
-    /* Widget 3: Quick Scratchpad / Notes */
-    .notes-area {
-      width: 100%;
-      height: 220px;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 0.8rem;
-      font-size: 0.95rem;
-      resize: none;
-      outline: none;
-      background: var(--bg);
-      color: var(--text);
-      line-height: 1.5;
-    }
-
-    .notes-area:focus {
-      border-color: var(--primary);
-      background: var(--surface);
-    }
-
-    /* Widget 4: GPA Calculator */
-    .gpa-grid {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-      margin-bottom: 1rem;
-    }
-
-    .gpa-row {
-      display: flex;
-      gap: 0.5rem;
-    }
-
-    .gpa-result-box {
-      margin-top: auto;
-      background: var(--primary-light);
-      border: 1px solid rgba(79, 70, 229, 0.2);
-      border-radius: 10px;
-      padding: 0.8rem;
-      text-align: center;
-    }
-
-    .gpa-val {
-      font-size: 1.8rem;
-      font-weight: 800;
-      color: var(--primary);
-    }
-
-    /* Widget 5: Focus Sounds */
-    .sound-buttons {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 0.75rem;
-    }
-
-    .sound-card {
-      border: 1px solid var(--border);
-      background: var(--bg);
-      border-radius: 12px;
-      padding: 0.8rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      cursor: pointer;
-      transition: all 0.15s ease;
-    }
-
-    .sound-card.playing {
-      border-color: var(--primary);
-      background: var(--primary-light);
-    }
-
-    .sound-card span {
-      font-size: 0.9rem;
-      font-weight: 600;
-    }
+    .export-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-top: 0.8rem; }
+    .btn-export { background: #f1f5f9; color: var(--text); border: 1px solid var(--border); padding: 8px; font-size: 0.8rem; }
+    .btn-export:hover { background: #e2e8f0; color: var(--primary); }
   </style>
 </head>
 <body>
 
-  <div class="container">
-    
-    <!-- Header -->
-    <header>
-      <div class="header-title">
-        <h1>🎓 Student Workspace</h1>
-        <p id="current-date">Organize assignments, track focus cycles, and calculate grades.</p>
-      </div>
-      <div class="quote-box">
-        "Small daily disciplines compound into massive academic results."
-      </div>
-    </header>
+  <header>
+    <h1>🎓 Student Workspace & AI Study Engine</h1>
+    <p>Read & Summarize PDFs, Generate Mock Tests, Export Docs & Track Academics</p>
+  </header>
 
-    <!-- Dashboard Content -->
-    <div class="dashboard-grid">
+  <div class="grid">
 
-      <!-- 1. Pomodoro Focus Timer -->
-      <div class="card col-4">
-        <div class="card-title">
-          <span>⏱️ Focus Timer</span>
-          <span id="cycle-count" style="font-size: 0.8rem; color: var(--text-muted);">Cycle #1</span>
-        </div>
-        <div class="timer-modes">
-          <button class="timer-mode-btn active" data-time="1500">Study (25m)</button>
-          <button class="timer-mode-btn" data-time="300">Break (5m)</button>
-          <button class="timer-mode-btn" data-time="900">Long (15m)</button>
-        </div>
-        <div class="timer-display" id="timer-display">25:00</div>
-        <div class="timer-controls">
-          <button class="btn btn-primary" id="timer-start">Start</button>
-          <button class="btn btn-secondary" id="timer-reset">Reset</button>
-        </div>
+    <div class="card card-span-2">
+      <h2>
+        <span>✨ Inbuilt AI Study & Document Assistant</span>
+        <span id="doc-status" class="badge" style="background:#e0e7ff;color:#4338ca">No File Loaded</span>
+      </h2>
+
+      <div class="drop-zone" onclick="document.getElementById('pdf-input').click()">
+        <span id="upload-label">📄 Click or Drop a <strong>PDF / TXT Document</strong> here</span>
+        <input type="file" id="pdf-input" accept=".pdf,.txt" style="display:none" onchange="handleFileUpload(event)">
       </div>
 
-      <!-- 2. Assignment & Task Tracker -->
-      <div class="card col-8">
-        <div class="card-title">
-          <span>📝 Assignment & Exam Tracker</span>
-          <span id="task-stats" style="font-size: 0.8rem; color: var(--text-muted);">0 Tasks</span>
-        </div>
-        <form class="task-form" id="task-form">
-          <input type="text" id="task-title" class="input-field" placeholder="Task or assignment title..." required>
-          <input type="text" id="task-tag" class="input-field" style="max-width: 130px;" placeholder="Subject (e.g. Math)">
-          <input type="date" id="task-date" class="input-field" style="max-width: 160px;">
-          <button type="submit" class="btn btn-primary">+ Add</button>
-        </form>
-        <ul class="task-list" id="task-list"></ul>
+      <div class="ai-tabs">
+        <button class="ai-tab-btn active" onclick="switchAITab('tab-summary')">📝 Smart Summary</button>
+        <button class="ai-tab-btn" onclick="switchAITab('tab-quiz')">🎯 Mock Quiz / Test</button>
+        <button class="ai-tab-btn" onclick="switchAITab('tab-chat')">💬 Q&A Search</button>
+        <button class="ai-tab-btn" onclick="switchAITab('tab-export')">📤 Export Docs</button>
       </div>
 
-      <!-- 3. Scratchpad / Quick Notes -->
-      <div class="card col-4">
-        <div class="card-title">
-          <span>📋 Scratchpad & Notes</span>
-          <span id="note-word-count" style="font-size: 0.8rem; color: var(--text-muted);">0 words</span>
+      <div id="tab-summary" class="ai-tab-content">
+        <div class="row">
+          <button onclick="generateSummary(3)" style="padding:4px 8px;font-size:0.78rem">Short Summary</button>
+          <button onclick="generateSummary(7)" style="padding:4px 8px;font-size:0.78rem">Detailed Notes</button>
+          <button onclick="extractKeyTerms()" style="padding:4px 8px;font-size:0.78rem">Key Formulae & Terms</button>
         </div>
-        <textarea id="notes" class="notes-area" placeholder="Jot down quick lecture formulas, references, or reminder keys..."></textarea>
+        <div class="ai-output" id="summary-output">Upload a PDF above and click a summary option to analyze your study material.</div>
       </div>
 
-      <!-- 4. Quick GPA Target Calculator -->
-      <div class="card col-4">
-        <div class="card-title">
-          <span>📊 GPA Calculator</span>
-          <button class="btn btn-secondary" id="add-course-btn" style="padding: 2px 8px; font-size: 0.75rem;">+ Course</button>
+      <div id="tab-quiz" class="ai-tab-content" style="display:none">
+        <div class="row">
+          <button onclick="generateQuiz()" style="width:100%">⚡ Generate 5 Mock Quiz Questions from PDF</button>
         </div>
-        <div class="gpa-grid" id="gpa-rows">
-          <div class="gpa-row">
-            <input type="text" class="input-field" placeholder="Course" value="Course 1">
-            <select class="input-field gpa-grade" style="max-width: 90px;">
-              <option value="4.0">A (4.0)</option>
-              <option value="3.7">A- (3.7)</option>
-              <option value="3.3">B+ (3.3)</option>
-              <option value="3.0">B (3.0)</option>
-              <option value="2.7">B- (2.7)</option>
-              <option value="2.0">C (2.0)</option>
-            </select>
-            <input type="number" class="input-field gpa-credits" placeholder="Credits" value="3" min="1" max="6" style="max-width: 75px;">
-          </div>
-        </div>
-        <div class="gpa-result-box">
-          <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">ESTIMATED GPA</div>
-          <div class="gpa-val" id="gpa-display">4.00</div>
-        </div>
+        <div class="ai-output" id="quiz-output" style="max-height:280px">Click above to generate mock test questions based on the uploaded document.</div>
       </div>
 
-      <!-- 5. Offline Ambient Study Generator -->
-      <div class="card col-4">
-        <div class="card-title">
-          <span>🎧 Ambient Study Generator</span>
+      <div id="tab-chat" class="ai-tab-content" style="display:none">
+        <div class="row">
+          <input type="text" id="ai-query" placeholder="Ask a question or search key topics in the PDF..." onkeydown="if(event.key==='Enter') searchInDoc()">
+          <button onclick="searchInDoc()" style="width:90px">Search</button>
         </div>
-        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
-          Synthesized offline focus noise to block room distractions.
-        </p>
-        <div class="sound-buttons">
-          <div class="sound-card" id="sound-rain">
-            <span>🌧️ Soft Rain</span>
-            <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.75rem;">Play</button>
-          </div>
-          <div class="sound-card" id="sound-pink">
-            <span>📻 Pink Noise</span>
-            <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.75rem;">Play</button>
-          </div>
-        </div>
+        <div class="ai-output" id="chat-output">Ask any topic or concept contained in your uploaded document.</div>
       </div>
 
+      <div id="tab-export" class="ai-tab-content" style="display:none">
+        <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:0.5rem">Convert your document analysis, summary, and notes into editable formats:</p>
+        <div class="export-grid">
+          <button class="btn-export" onclick="exportToWord()">📄 Word (.doc)</button>
+          <button class="btn-export" onclick="exportToExcel()">📊 Excel (.csv)</button>
+          <button class="btn-export" onclick="exportToPDF()">📑 PDF (.pdf)</button>
+        </div>
+      </div>
     </div>
+
+    <div class="card">
+      <h2><span>📊 Semester GPA (10 Pt)</span> <button style="padding:2px 8px" onclick="addRow()">+ Course</button></h2>
+      <div id="gpa-rows" style="max-height:160px;overflow-y:auto;margin-bottom:0.5rem">
+        <div class="row gpa-r">
+          <select class="g-val" onchange="calcGPA()">
+            <option value="10">S (10)</option><option value="9">A+ (9)</option><option value="8">A (8)</option>
+            <option value="7">B+ (7)</option><option value="6.5">B (6.5)</option><option value="6">C+ (6)</option>
+            <option value="5">C (5)</option><option value="0">U (0)</option>
+          </select>
+          <input type="number" class="g-crd" value="4" min="1" max="10" placeholder="Credits" oninput="calcGPA()" style="width:80px">
+        </div>
+      </div>
+      <div class="stat-box" id="gpa-out">10.00</div>
+    </div>
+
+    <div class="card">
+      <h2>🎯 Target CGPA Simulator</h2>
+      <div class="row">
+        <input type="number" id="cur-cg" placeholder="Current CGPA" value="7.8" step="0.01" oninput="calcSim()">
+        <input type="number" id="cur-cr" placeholder="Done Credits" value="60" oninput="calcSim()">
+      </div>
+      <div class="row">
+        <input type="number" id="tgt-cg" placeholder="Target CGPA" value="8.5" step="0.01" oninput="calcSim()">
+        <input type="number" id="rem-cr" placeholder="Rem Credits" value="40" oninput="calcSim()">
+      </div>
+      <div class="stat-box" id="sim-out">9.55</div>
+      <center style="margin-top:6px"><span id="sim-badge" class="badge" style="background:#fef3c7;color:#b45309">🔥 High Effort (Needs S/A+)</span></center>
+    </div>
+
+    <div class="card">
+      <h2>⏱️ Focus Timer</h2>
+      <div class="timer" id="t-disp">25:00</div>
+      <div style="display:flex;gap:.5rem">
+        <button style="flex:1" onclick="toggleTimer()" id="t-btn">Start</button>
+        <button style="flex:1;background:#64748b" onclick="resetTimer()">Reset</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>📝 Tasks & Exam Dates</h2>
+      <div class="row">
+        <input type="text" id="t-in" placeholder="Assignment / Exam..." style="margin-bottom:0">
+        <button onclick="addTask()">Add</button>
+      </div>
+      <ul id="t-list" style="list-style:none;margin-top:.6rem;max-height:130px;overflow-y:auto"></ul>
+    </div>
+
   </div>
 
   <script>
-    /* Date Formatting */
-    const dateOpts = { weekday: 'long', month: 'short', day: 'numeric' };
-    document.getElementById('current-date').textContent = `Today is ${new Date().toLocaleDateString(undefined, dateOpts)}`;
+    /* ================= AI STUDY ENGINE & PDF PROCESSOR ================= */
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    
+    let docText = "";
+    let docSentences = [];
+    let activeSummaryText = "";
 
-    /* Audio Context Generator for Timer Chimes & Ambient Audio */
-    let audioCtx = null;
-    function getAudioContext() {
-      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      return audioCtx;
+    function switchAITab(tabId) {
+      document.querySelectorAll('.ai-tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.ai-tab-content').forEach(c => c.style.display = 'none');
+      event.target.classList.add('active');
+      document.getElementById(tabId).style.display = 'block';
     }
 
-    function playDing() {
-      const ctx = getAudioContext();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
-      osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.1); // A5
-      gain.gain.setValueAtTime(0.3, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.8);
-    }
+    async function handleFileUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
 
-    /* 1. Pomodoro Logic */
-    let timerDuration = 1500;
-    let timerRemaining = 1500;
-    let timerInterval = null;
-    let isTimerRunning = false;
-    let completedCycles = 0;
-
-    const timerDisplay = document.getElementById('timer-display');
-    const timerStartBtn = document.getElementById('timer-start');
-    const timerResetBtn = document.getElementById('timer-reset');
-    const modeBtns = document.querySelectorAll('.timer-mode-btn');
-
-    function updateTimerDisplay() {
-      const mins = String(Math.floor(timerRemaining / 60)).padStart(2, '0');
-      const secs = String(timerRemaining % 60).padStart(2, '0');
-      timerDisplay.textContent = `${mins}:${secs}`;
-    }
-
-    function startTimer() {
-      if (isTimerRunning) {
-        clearInterval(timerInterval);
-        timerStartBtn.textContent = 'Start';
-        isTimerRunning = false;
-        return;
-      }
-
-      getAudioContext(); // Resume audio on user action
-      isTimerRunning = true;
-      timerStartBtn.textContent = 'Pause';
-
-      timerInterval = setInterval(() => {
-        timerRemaining--;
-        updateTimerDisplay();
-
-        if (timerRemaining <= 0) {
-          clearInterval(timerInterval);
-          isTimerRunning = false;
-          timerStartBtn.textContent = 'Start';
-          playDing();
-          completedCycles++;
-          document.getElementById('cycle-count').textContent = `Cycle #${completedCycles + 1}`;
-          alert('Focus session complete! Time for a break.');
-          timerRemaining = timerDuration;
-          updateTimerDisplay();
-        }
-      }, 1000);
-    }
-
-    function resetTimer() {
-      clearInterval(timerInterval);
-      isTimerRunning = false;
-      timerStartBtn.textContent = 'Start';
-      timerRemaining = timerDuration;
-      updateTimerDisplay();
-    }
-
-    modeBtns.forEach(btn => {
-      btn.addEventListener('click', () => {
-        modeBtns.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        timerDuration = parseInt(btn.dataset.time);
-        resetTimer();
-      });
-    });
-
-    timerStartBtn.addEventListener('click', startTimer);
-    timerResetBtn.addEventListener('click', resetTimer);
-
-    /* 2. Tasks Logic */
-    let tasks = JSON.parse(localStorage.getItem('student_tasks') || '[]');
-    const taskForm = document.getElementById('task-form');
-    const taskList = document.getElementById('task-list');
-
-    function saveTasks() {
-      localStorage.setItem('student_tasks', JSON.stringify(tasks));
-      renderTasks();
-    }
-
-    function renderTasks() {
-      taskList.innerHTML = '';
-      const pendingCount = tasks.filter(t => !t.completed).length;
-      document.getElementById('task-stats').textContent = `${pendingCount} Pending`;
-
-      tasks.forEach((task, idx) => {
-        const li = document.createElement('li');
-        li.className = `task-item ${task.completed ? 'completed' : ''}`;
-        li.innerHTML = `
-          <div class="task-left">
-            <input type="checkbox" ${task.completed ? 'checked' : ''} data-id="${idx}">
-            <span>${task.title}</span>
-            ${task.tag ? `<span class="tag">${task.tag}</span>` : ''}
-            ${task.date ? `<small style="color:var(--text-muted);font-size:0.75rem;">📅 ${task.date}</small>` : ''}
-          </div>
-          <button class="btn btn-danger-light" style="padding: 2px 6px; font-size: 0.75rem;" data-del="${idx}">✕</button>
-        `;
-        taskList.appendChild(li);
-      });
-    }
-
-    taskForm.addEventListener('submit', e => {
-      e.preventDefault();
-      const title = document.getElementById('task-title').value.trim();
-      const tag = document.getElementById('task-tag').value.trim();
-      const date = document.getElementById('task-date').value;
-
-      if (!title) return;
-      tasks.push({ title, tag, date, completed: false });
-      taskForm.reset();
-      saveTasks();
-    });
-
-    taskList.addEventListener('click', e => {
-      if (e.target.dataset.id !== undefined) {
-        tasks[e.target.dataset.id].completed = e.target.checked;
-        saveTasks();
-      }
-      if (e.target.dataset.del !== undefined) {
-        tasks.splice(e.target.dataset.del, 1);
-        saveTasks();
-      }
-    });
-
-    /* 3. Scratchpad Notes Logic */
-    const notesArea = document.getElementById('notes');
-    notesArea.value = localStorage.getItem('student_notes') || '';
-
-    function updateWordCount() {
-      const words = notesArea.value.trim() ? notesArea.value.trim().split(/\s+/).length : 0;
-      document.getElementById('note-word-count').textContent = `${words} words`;
-    }
-
-    notesArea.addEventListener('input', () => {
-      localStorage.setItem('student_notes', notesArea.value);
-      updateWordCount();
-    });
-    updateWordCount();
-
-    /* 4. GPA Target Calculator */
-    const gpaRowsContainer = document.getElementById('gpa-rows');
-    const gpaDisplay = document.getElementById('gpa-display');
-    const addCourseBtn = document.getElementById('add-course-btn');
-
-    function calculateGPA() {
-      const grades = document.querySelectorAll('.gpa-grade');
-      const credits = document.querySelectorAll('.gpa-credits');
-      let totalQualityPoints = 0;
-      let totalCredits = 0;
-
-      grades.forEach((gradeEl, i) => {
-        const gradeVal = parseFloat(gradeEl.value);
-        const creditVal = parseFloat(credits[i].value) || 0;
-        totalQualityPoints += gradeVal * creditVal;
-        totalCredits += creditVal;
-      });
-
-      const finalGPA = totalCredits > 0 ? (totalQualityPoints / totalCredits).toFixed(2) : '4.00';
-      gpaDisplay.textContent = finalGPA;
-    }
-
-    addCourseBtn.addEventListener('click', () => {
-      const row = document.createElement('div');
-      row.className = 'gpa-row';
-      row.innerHTML = `
-        <input type="text" class="input-field" placeholder="Course">
-        <select class="input-field gpa-grade" style="max-width: 90px;">
-          <option value="4.0">A (4.0)</option>
-          <option value="3.7">A- (3.7)</option>
-          <option value="3.3">B+ (3.3)</option>
-          <option value="3.0">B (3.0)</option>
-          <option value="2.7">B- (2.7)</option>
-          <option value="2.0">C (2.0)</option>
-        </select>
-        <input type="number" class="input-field gpa-credits" placeholder="Credits" value="3" min="1" max="6" style="max-width: 75px;">
-      `;
-      gpaRowsContainer.appendChild(row);
-      attachGpaListeners();
-      calculateGPA();
-    });
-
-    function attachGpaListeners() {
-      document.querySelectorAll('.gpa-grade, .gpa-credits').forEach(el => {
-        el.removeEventListener('input', calculateGPA);
-        el.addEventListener('input', calculateGPA);
-      });
-    }
-    attachGpaListeners();
-    calculateGPA();
-
-    /* 5. Pure Web Audio Ambient Noise Generators */
-    let currentNoiseNode = null;
-    let activeSoundId = null;
-
-    function createPinkNoise() {
-      const ctx = getAudioContext();
-      const bufferSize = ctx.sampleRate * 2;
-      const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-      const output = noiseBuffer.getChannelData(0);
-      let b0 = 0, b1 = 0, b2 = 0;
-
-      for (let i = 0; i < bufferSize; i++) {
-        const white = Math.random() * 2 - 1;
-        b0 = 0.99886 * b0 + white * 0.0555179;
-        b1 = 0.99332 * b1 + white * 0.0750759;
-        b2 = 0.96900 * b2 + white * 0.1538520;
-        output[i] = (b0 + b1 + b2) * 0.1;
-      }
-
-      const whiteNoise = ctx.createBufferSource();
-      whiteNoise.buffer = noiseBuffer;
-      whiteNoise.loop = true;
-      return whiteNoise;
-    }
-
-    function toggleSound(soundId, type) {
-      const card = document.getElementById(soundId);
-      const btn = card.querySelector('button');
-
-      if (activeSoundId === soundId) {
-        if (currentNoiseNode) currentNoiseNode.stop();
-        currentNoiseNode = null;
-        activeSoundId = null;
-        card.classList.remove('playing');
-        btn.textContent = 'Play';
-        return;
-      }
-
-      if (currentNoiseNode) {
-        currentNoiseNode.stop();
-        document.querySelectorAll('.sound-card').forEach(c => c.classList.remove('playing'));
-        document.querySelectorAll('.sound-card button').forEach(b => b.textContent = 'Play');
-      }
-
-      const ctx = getAudioContext();
-      currentNoiseNode = createPinkNoise();
-
-      // Filter modulation for Rain effect
-      if (type === 'rain') {
-        const filter = ctx.createBiquadFilter();
-        filter.type = 'lowpass';
-        filter.frequency.value = 800;
-        currentNoiseNode.connect(filter);
-        filter.connect(ctx.destination);
+      document.getElementById('upload-label').innerHTML = `⏳ Loading <strong>${file.name}</strong>...`;
+      
+      if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
+        const fileReader = new FileReader();
+        fileReader.onload = async function() {
+          const typedarray = new Uint8Array(this.result);
+          try {
+            const pdf = await pdfjsLib.getDocument(typedarray).promise;
+            let fullText = "";
+            for (let i = 1; i <= pdf.numPages; i++) {
+              const page = await pdf.getPage(i);
+              const textContent = await page.getTextContent();
+              const pageText = textContent.items.map(item => item.str).join(' ');
+              fullText += pageText + " ";
+            }
+            processExtractedText(file.name, fullText);
+          } catch(err) {
+            alert('Error reading PDF. Please ensure it contains selectable text.');
+          }
+        };
+        fileReader.readAsArrayBuffer(file);
       } else {
-        currentNoiseNode.connect(ctx.destination);
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+          processExtractedText(file.name, evt.target.result);
+        };
+        reader.readAsText(file);
       }
-
-      currentNoiseNode.start();
-      activeSoundId = soundId;
-      card.classList.add('playing');
-      btn.textContent = 'Stop';
     }
 
-    document.getElementById('sound-rain').addEventListener('click', () => toggleSound('sound-rain', 'rain'));
-    document.getElementById('sound-pink').addEventListener('click', () => toggleSound('sound-pink', 'pink'));
+    function processExtractedText(filename, text) {
+      docText = text.replace(/\s+/g, ' ').trim();
+      docSentences = docText.match(/[^.!?]+[.!?]+/g) || [docText];
+      
+      document.getElementById('upload-label').innerHTML = `✅ Loaded: <strong>${filename}</strong> (${docSentences.length} sentences)`;
+      document.getElementById('doc-status').innerText = 'Document Ready';
+      document.getElementById('doc-status').style.background = '#d1fae5';
+      document.getElementById('doc-status').style.color = '#065f46';
+      
+      generateSummary(4);
+    }
 
-    // Initial render
-    renderTasks();
+    /* Client-side NLP Extractive Summarization */
+    function generateSummary(sentenceCount) {
+      if (!docText) { alert("Please upload a PDF or TXT file first!"); return; }
+      
+      const words = docText.toLowerCase().match(/\b[a-z]{3,}\b/g) || [];
+      const stopWords = new Set(['the','and','for','that','this','with','from','have','are','was','were','which','your','their','will','about']);
+      const freqMap = {};
+      
+      words.forEach(w => {
+        if (!stopWords.has(w)) freqMap[w] = (freqMap[w] || 0) + 1;
+      });
+
+      const scoredSentences = docSentences.map(sent => {
+        const sentWords = sent.toLowerCase().match(/\b[a-z]{3,}\b/g) || [];
+        let score = 0;
+        sentWords.forEach(w => { if (freqMap[w]) score += freqMap[w]; });
+        return { text: sent.trim(), score: score / (sentWords.length || 1) };
+      });
+
+      scoredSentences.sort((a, b) => b.score - a.score);
+      const topSentences = scoredSentences.slice(0, sentenceCount).map(s => s.text);
+      
+      activeSummaryText = `📌 Key Summary Highlights:\n\n• ` + topSentences.join('\n\n• ');
+      document.getElementById('summary-output').innerText = activeSummaryText;
+    }
+
+    function extractKeyTerms() {
+      if (!docText) { alert("Please upload a PDF first!"); return; }
+      const words = docText.match(/\b[A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,})*\b|\b[a-z]{4,}\b/g) || [];
+      const counts = {};
+      words.forEach(w => counts[w] = (counts[w] || 0) + 1);
+      const sorted = Object.entries(counts).sort((a,b) => b[1] - a[1]).slice(0, 15);
+      
+      activeSummaryText = "🔑 Top Important Concepts & Keywords in Document:\n\n" + 
+        sorted.map(([term, count], i) => `${i+1}. ${term} (mentioned ${count} times)`).join('\n');
+      document.getElementById('summary-output').innerText = activeSummaryText;
+    }
+
+    /* Client-side Mock Quiz Generator */
+    function generateQuiz() {
+      if (!docSentences.length) { alert("Please upload a PDF first!"); return; }
+      
+      const suitableSentences = docSentences.filter(s => s.length > 40 && s.length < 140);
+      if (suitableSentences.length < 3) {
+        document.getElementById('quiz-output').innerHTML = "Document is too short to generate a mock test.";
+        return;
+      }
+
+      let quizHtml = "";
+      const shuffled = suitableSentences.sort(() => 0.5 - Math.random()).slice(0, 5);
+
+      shuffled.forEach((sentence, idx) => {
+        const words = sentence.trim().split(' ').filter(w => w.length > 4 && !/^(about|which|there|their|these)$/i.test(w));
+        if (!words.length) return;
+        
+        const answerWord = words[Math.floor(Math.random() * words.length)].replace(/[.,/#!$%^&*;:{}=\-_`~()]/g,"");
+        const blankSentence = sentence.replace(answerWord, "__________");
+
+        const distractors = ["Constant", "Variable", "Theorem", "Function", "System", "Phase", "Method"]
+          .filter(d => d.toLowerCase() !== answerWord.toLowerCase())
+          .sort(() => 0.5 - Math.random()).slice(0, 3);
+        
+        const options = [answerWord, ...distractors].sort(() => 0.5 - Math.random());
+
+        quizHtml += `
+          <div class="quiz-card">
+            <strong>Q${idx+1}:</strong> ${blankSentence}
+            <div style="margin-top:6px">
+              ${options.map(opt => `
+                <div class="quiz-opt" onclick="checkAnswer(this, '${opt === answerWord}')">
+                  ${opt}
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      });
+
+      document.getElementById('quiz-output').innerHTML = quizHtml;
+    }
+
+    function checkAnswer(el, isCorrect) {
+      if (isCorrect === 'true') {
+        el.classList.add('correct');
+        el.innerHTML += " ✅ (Correct)";
+      } else {
+        el.classList.add('wrong');
+        el.innerHTML += " ❌";
+      }
+    }
+
+    /* Q&A Keyword Search */
+    function searchInDoc() {
+      const q = document.getElementById('ai-query').value.trim().toLowerCase();
+      if (!q || !docSentences.length) return;
+      
+      const matches = docSentences.filter(s => s.toLowerCase().includes(q));
+      if (matches.length) {
+        document.getElementById('chat-output').innerHTML = `🔍 Found <strong>${matches.length}</strong> matching sections:<br><br>` + 
+          matches.slice(0, 4).map(m => `• ${m.trim()}`).join('<br><br>');
+      } else {
+        document.getElementById('chat-output').innerHTML = `No direct match found for "<strong>${q}</strong>". Try searching related terms.`;
+      }
+    }
+
+    /* ================= DOCUMENT EXPORTERS ================= */
+    function exportToWord() {
+      const content = activeSummaryText || docText.slice(0, 2000) || "Student Workspace Study Notes";
+      const blob = new Blob(['\ufeff' + content], { type: 'application/msword' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'Study_Notes.doc';
+      a.click();
+    }
+
+    function exportToExcel() {
+      let csv = "Item,Details\n";
+      csv += `"Document Status","${docSentences.length} Sentences Processed"\n`;
+      csv += `"Semester GPA","${document.getElementById('gpa-out').innerText}"\n`;
+      csv += `"Target CGPA Simulator","Required: ${document.getElementById('sim-out').innerText}"\n`;
+      
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'Student_Report.csv';
+      a.click();
+    }
+
+    function exportToPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(16);
+      doc.text("Student Study & Analysis Report", 14, 20);
+      
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      const textToPrint = activeSummaryText || docText.slice(0, 1000) || "No summary generated yet.";
+      const splitText = doc.splitTextToSize(textToPrint, 180);
+      doc.text(splitText, 14, 32);
+      
+      doc.save("Study_Summary.pdf");
+    }
+
+    /* ================= ACADEMIC CALCULATORS & TIMER ================= */
+    function calcGPA(){
+      let pts=0, crds=0;
+      document.querySelectorAll('.gpa-r').forEach(r=>{
+        const g = +r.querySelector('.g-val').value, c = +r.querySelector('.g-crd').value || 0;
+        pts += g * c; crds += c;
+      });
+      document.getElementById('gpa-out').innerText = crds ? (pts/crds).toFixed(2) : '0.00';
+    }
+    function addRow(){
+      const div = document.createElement('div');
+      div.className = 'row gpa-r';
+      div.innerHTML = `<select class="g-val" onchange="calcGPA()"><option value="10">S (10)</option><option value="9">A+ (9)</option><option value="8">A (8)</option><option value="7">B+ (7)</option><option value="6.5">B (6.5)</option><option value="6">C+ (6)</option><option value="5">C (5)</option><option value="0">U (0)</option></select><input type="number" class="g-crd" value="3" min="1" max="10" placeholder="Credits" oninput="calcGPA()" style="width:80px"><button onclick="this.parentElement.remove();calcGPA()" style="background:#fee2e2;color:#ef4444;padding:0 6px">✕</button>`;
+      document.getElementById('gpa-rows').appendChild(div);
+      calcGPA();
+    }
+    function calcSim(){
+      const curC = +document.getElementById('cur-cg').value || 0, curCr = +document.getElementById('cur-cr').value || 0;
+      const tgtC = +document.getElementById('tgt-cg').value || 0, remCr = +document.getElementById('rem-cr').value || 0;
+      if(!remCr) return;
+      const req = ((tgtC * (curCr + remCr)) - (curC * curCr)) / remCr;
+      document.getElementById('sim-out').innerText = req.toFixed(2);
+      const b = document.getElementById('sim-badge');
+      if(req > 10){ b.innerText='❌ Impossible (>10)'; b.style.background='#fee2e2'; b.style.color='#dc2626'; }
+      else if(req > 9){ b.innerText='🔥 High Effort (Needs S/A+)'; b.style.background='#fef3c7'; b.style.color='#b45309'; }
+      else{ b.innerText='✅ Achievable'; b.style.background='#d1fae5'; b.style.color='#059669'; }
+    }
+    let tRem=1500, tInt=null;
+    function toggleTimer(){
+      if(tInt){ clearInterval(tInt); tInt=null; document.getElementById('t-btn').innerText='Start'; return; }
+      document.getElementById('t-btn').innerText='Pause';
+      tInt = setInterval(()=>{
+        if(--tRem <= 0){ clearInterval(tInt); alert('Session complete!'); tRem=1500; }
+        const m = String(Math.floor(tRem/60)).padStart(2,'0'), s = String(tRem%60).padStart(2,'0');
+        document.getElementById('t-disp').innerText = `${m}:${s}`;
+      },1000);
+    }
+    function resetTimer(){ clearInterval(tInt); tInt=null; tRem=1500; document.getElementById('t-disp').innerText='25:00'; document.getElementById('t-btn').innerText='Start'; }
+    function addTask(){
+      const val = document.getElementById('t-in').value.trim();
+      if(!val) return;
+      const li = document.createElement('li');
+      li.style = 'padding:.3rem 0;display:flex;justify-content:space-between;font-size:.85rem;border-bottom:1px solid #f1f5f9';
+      li.innerHTML = `<span onclick="this.classList.toggle('task-done')" style="cursor:pointer">${val}</span><button onclick="this.parentElement.remove()" style="background:none;color:#ef4444;padding:0">✕</button>`;
+      document.getElementById('t-list').appendChild(li);
+      document.getElementById('t-in').value = '';
+    }
   </script>
 </body>
 </html>
