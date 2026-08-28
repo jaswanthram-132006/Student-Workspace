@@ -82,6 +82,7 @@
 
   <div class="grid">
 
+    <!-- 1. AI STUDY & DOCUMENT ENGINE -->
     <div class="card card-span-2">
       <h2>
         <span>✨ Inbuilt Study & Revision Assistant</span>
@@ -94,7 +95,7 @@
       </div>
 
       <div id="sec-paste">
-        <textarea id="paste-input" placeholder="Paste your syllabus, lecture notes, textbook passages, or definitions here..." style="height:95px;margin-bottom:0.5rem"></textarea>
+        <textarea id="paste-input" placeholder="Paste your syllabus, lecture notes, textbook chapters, or definitions here..." style="height:95px;margin-bottom:0.5rem"></textarea>
         <button onclick="processPastedText()" style="width:100%">⚡ Process & Analyze Notes</button>
       </div>
 
@@ -153,6 +154,7 @@
       </div>
     </div>
 
+    <!-- 2. 10-POINT GPA CALCULATOR -->
     <div class="card">
       <h2><span>📊 Semester GPA (10 Pt)</span> <button style="padding:2px 8px" onclick="addGpaRow()">+ Course</button></h2>
       <div id="gpa-table" style="max-height:160px;overflow-y:auto;margin-bottom:0.5rem">
@@ -168,6 +170,7 @@
       <div class="stat-box" id="gpa-display">10.00</div>
     </div>
 
+    <!-- 3. TARGET CGPA SIMULATOR -->
     <div class="card">
       <h2>🎯 Target CGPA Simulator</h2>
       <div class="row">
@@ -182,6 +185,7 @@
       <center style="margin-top:6px"><span id="sim-badge" class="badge" style="background:#fef3c7;color:#b45309">🔥 High Effort (Needs S/A+)</span></center>
     </div>
 
+    <!-- 4. FOCUS TIMER -->
     <div class="card">
       <h2>⏱️ Focus Timer</h2>
       <div class="timer" id="timer-display">25:00</div>
@@ -191,6 +195,7 @@
       </div>
     </div>
 
+    <!-- 5. TASKS & EXAM TRACKER -->
     <div class="card">
       <h2>📝 Tasks & Exam Dates</h2>
       <div class="row">
@@ -209,6 +214,7 @@
     let studyKeyNouns = [];
     let currentQuizScore = 0;
     let currentQuizMax = 0;
+    let quizDataStore = [];
 
     /* Mode & Tab Switching */
     function setMode(mode) {
@@ -219,7 +225,8 @@
     }
 
     function showTab(tab) {
-      ['sum', 'quiz', 'search', 'exp'].forEach(t => {
+      const tabs = ['sum', 'quiz', 'search', 'exp'];
+      tabs.forEach(t => {
         document.getElementById('view-' + t).style.display = t === tab ? 'block' : 'none';
         document.getElementById('tab-btn-' + t).className = t === tab ? 'ai-tab-btn active' : 'ai-tab-btn';
       });
@@ -239,7 +246,6 @@
       const reader = new FileReader();
       reader.onload = function(evt) {
         let content = evt.target.result;
-        // Basic plain text / ASCII cleaning
         if (typeof content !== 'string') {
           const bytes = new Uint8Array(content);
           content = "";
@@ -268,4 +274,285 @@
       const nouns = studyText.match(/\b[A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,})*\b/g) || [];
       const map = {};
       nouns.forEach(n => {
-        if (!/^(The|This|These|That|When|Where|There|Then|However|Therefore|For|And|With|From|Into)$/i.
+        if (!/^(The|This|These|That|When|Where|There|Then|However|Therefore|For|And|With|From|Into)$/i.test(n)) {
+          map[n] = (map[n] || 0) + 1;
+        }
+      });
+      studyKeyNouns = Object.entries(map).sort((a,b) => b[1] - a[1]).map(e => e[0]);
+
+      document.getElementById('doc-status').innerText = 'Ready for Study';
+      document.getElementById('doc-status').style.background = '#d1fae5';
+      document.getElementById('doc-status').style.color = '#065f46';
+      document.getElementById('upload-status-label').innerHTML = `✅ Loaded: <strong>${sourceName}</strong> (${studySentences.length} sentences)`;
+
+      summarize('points');
+    }
+
+    /* Summary Engine */
+    function summarize(type) {
+      if (!studySentences.length) { alert("Please load or paste some notes first!"); return; }
+      
+      let res = "";
+      if (type === 'defs') {
+        const defs = studySentences.filter(s => /\b(is defined as|is known as|refers to|denotes|is called|means|is the)\b/i.test(s));
+        res = "📖 KEY DEFINITIONS & THEOREMS:\n\n" + 
+          (defs.length ? defs.slice(0, 8).map((d, i) => `${i+1}. ${d}`).join('\n\n') : studySentences.slice(0, 6).join('\n\n'));
+      } else if (type === 'cheat') {
+        res = "⚡ EXAM CHEAT SHEET:\n\n" +
+          "📌 Top Topics:\n• " + (studyKeyNouns.length ? studyKeyNouns.slice(0, 10).join('\n• ') : 'Core Concepts') + "\n\n" +
+          "📌 Important Points:\n• " + studySentences.slice(0, 5).join('\n• ');
+      } else {
+        res = "📑 CORE REVISION HIGHLIGHTS:\n\n• " + studySentences.slice(0, 8).join('\n\n• ');
+      }
+
+      document.getElementById('output-sum').innerText = res;
+    }
+
+    /* Mock Quiz Engine */
+    function buildQuiz() {
+      if (!studySentences.length) { alert("Please load or paste your notes first!"); return; }
+
+      const count = parseInt(document.getElementById('quiz-count').value);
+      currentQuizMax = count;
+      currentQuizScore = 0;
+      quizDataStore = [];
+
+      const sample = studySentences.slice().sort(() => 0.5 - Math.random()).slice(0, count);
+      const outputContainer = document.getElementById('output-quiz');
+      outputContainer.innerHTML = "";
+
+      sample.forEach((sent, idx) => {
+        const words = sent.split(' ').filter(w => w.length > 4 && !/^(about|which|there|their|these|where|could|would|should)$/i.test(w));
+        if (!words.length) return;
+
+        const target = words[Math.floor(Math.random() * words.length)].replace(/[^a-zA-Z0-9]/g, "");
+        const blank = sent.replace(target, "________");
+
+        let dist = studyKeyNouns.filter(n => n.toLowerCase() !== target.toLowerCase()).slice(0, 3);
+        while (dist.length < 3) dist.push(["Factor", "Constant", "System", "Vector"][dist.length]);
+
+        const opts = [target, ...dist].sort(() => 0.5 - Math.random());
+        quizDataStore.push({ target: target });
+
+        const card = document.createElement('div');
+        card.className = 'quiz-card';
+        card.id = `qcard-${idx}`;
+
+        const qTitle = document.createElement('p');
+        qTitle.innerHTML = `<strong>Q${idx+1}:</strong> ${blank}`;
+        card.appendChild(qTitle);
+
+        const optsWrapper = document.createElement('div');
+        optsWrapper.style.marginTop = '6px';
+
+        opts.forEach(opt => {
+          const optDiv = document.createElement('div');
+          optDiv.className = 'quiz-opt';
+          optDiv.textContent = opt;
+          optDiv.addEventListener('click', function() {
+            gradeAnswer(this, idx, opt === target, target);
+          });
+          optsWrapper.appendChild(optDiv);
+        });
+
+        card.appendChild(optsWrapper);
+        outputContainer.appendChild(card);
+      });
+
+      document.getElementById('quiz-score-val').innerText = `0 / ${currentQuizMax}`;
+      document.getElementById('quiz-score-box').style.display = 'block';
+    }
+
+    function gradeAnswer(el, qIdx, isCorrect, targetWord) {
+      const card = document.getElementById(`qcard-${qIdx}`);
+      if (card.dataset.answered) return;
+      card.dataset.answered = "true";
+
+      card.querySelectorAll('.quiz-opt').forEach(opt => {
+        opt.style.pointerEvents = 'none';
+      });
+
+      if (isCorrect) {
+        el.className = "quiz-opt correct";
+        el.innerHTML += " ✅ Correct!";
+        currentQuizScore++;
+      } else {
+        el.className = "quiz-opt wrong";
+        el.innerHTML += ` ❌ (Answer: <strong>${targetWord}</strong>)`;
+      }
+
+      document.getElementById('quiz-score-val').innerText = `${currentQuizScore} / ${currentQuizMax}`;
+    }
+
+    /* Concept Search */
+    function executeSearch() {
+      const q = document.getElementById('search-input').value.trim().toLowerCase();
+      if (!q || !studySentences.length) return;
+
+      const matches = studySentences.filter(s => s.toLowerCase().includes(q));
+      if (matches.length) {
+        document.getElementById('output-search').innerHTML = `🔍 Found <strong>${matches.length}</strong> matching sections:<br><br>` +
+          matches.slice(0, 5).map(m => `• ${m}`).join('<br><br>');
+      } else {
+        document.getElementById('output-search').innerHTML = `No exact match found for "<strong>${q}</strong>".`;
+      }
+    }
+
+    /* Exporters */
+    function downloadWord() {
+      const text = document.getElementById('output-sum').innerText || studyText.slice(0, 2000);
+      const blob = new Blob(['\ufeff' + text], { type: 'application/msword' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'Study_Notes.doc';
+      a.click();
+    }
+
+    function downloadExcel() {
+      let csv = "Index,Concept\n";
+      studySentences.slice(0, 20).forEach((s, i) => {
+        csv += `"${i+1}","${s.replace(/"/g, '""')}"\n`;
+      });
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'Revision_Sheet.csv';
+      a.click();
+    }
+
+    function downloadText() {
+      const text = document.getElementById('output-sum').innerText || studyText;
+      const blob = new Blob([text], { type: 'text/plain' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'Study_Summary.txt';
+      a.click();
+    }
+
+    /* 10-POINT GPA CALCULATOR */
+    function recalcGPA() {
+      let totalPts = 0;
+      let totalCr = 0;
+      document.querySelectorAll('.gpa-entry').forEach(row => {
+        const val = parseFloat(row.querySelector('.gpa-val').value);
+        const cr = parseFloat(row.querySelector('.gpa-cr').value) || 0;
+        totalPts += val * cr;
+        totalCr += cr;
+      });
+      document.getElementById('gpa-display').innerText = totalCr > 0 ? (totalPts / totalCr).toFixed(2) : '0.00';
+    }
+
+    function addGpaRow() {
+      const div = document.createElement('div');
+      div.className = 'row gpa-entry';
+      div.innerHTML = `
+        <select class="gpa-val" onchange="recalcGPA()">
+          <option value="10">S (10)</option><option value="9">A+ (9)</option><option value="8">A (8)</option>
+          <option value="7">B+ (7)</option><option value="6.5">B (6.5)</option><option value="6">C+ (6)</option>
+          <option value="5">C (5)</option><option value="0">U (0)</option>
+        </select>
+        <input type="number" class="gpa-cr" value="3" min="1" max="10" placeholder="Credits" oninput="recalcGPA()" style="width:80px">
+        <button class="remove-gpa-btn" style="background:#fee2e2;color:#ef4444;padding:0 6px">✕</button>
+      `;
+      div.querySelector('.remove-gpa-btn').addEventListener('click', function() {
+        div.remove();
+        recalcGPA();
+      });
+      document.getElementById('gpa-table').appendChild(div);
+      recalcGPA();
+    }
+
+    /* TARGET CGPA SIMULATOR */
+    function recalcSim() {
+      const curCg = parseFloat(document.getElementById('sim-cur-cg').value) || 0;
+      const curCr = parseFloat(document.getElementById('sim-cur-cr').value) || 0;
+      const tgtCg = parseFloat(document.getElementById('sim-tgt-cg').value) || 0;
+      const remCr = parseFloat(document.getElementById('sim-rem-cr').value) || 0;
+
+      if (!remCr) return;
+      const req = ((tgtCg * (curCr + remCr)) - (curCg * curCr)) / remCr;
+      document.getElementById('sim-display').innerText = req.toFixed(2);
+
+      const b = document.getElementById('sim-badge');
+      if (req > 10) {
+        b.innerText = '❌ Impossible (>10)';
+        b.style.background = '#fee2e2';
+        b.style.color = '#dc2626';
+      } else if (req > 9) {
+        b.innerText = '🔥 High Effort (Needs S/A+)';
+        b.style.background = '#fef3c7';
+        b.style.color = '#b45309';
+      } else {
+        b.innerText = '✅ Achievable';
+        b.style.background = '#d1fae5';
+        b.style.color = '#059669';
+      }
+    }
+
+    /* FOCUS TIMER */
+    let timerSec = 1500;
+    let timerInterval = null;
+
+    function toggleTimer() {
+      const btn = document.getElementById('timer-toggle-btn');
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+        btn.innerText = 'Start';
+        return;
+      }
+
+      btn.innerText = 'Pause';
+      timerInterval = setInterval(() => {
+        if (--timerSec <= 0) {
+          clearInterval(timerInterval);
+          timerInterval = null;
+          btn.innerText = 'Start';
+          alert('Study session complete!');
+          timerSec = 1500;
+        }
+        const m = String(Math.floor(timerSec / 60)).padStart(2, '0');
+        const s = String(timerSec % 60).padStart(2, '0');
+        document.getElementById('timer-display').innerText = `${m}:${s}`;
+      }, 1000);
+    }
+
+    function resetTimer() {
+      if (timerInterval) clearInterval(timerInterval);
+      timerInterval = null;
+      timerSec = 1500;
+      document.getElementById('timer-display').innerText = '25:00';
+      document.getElementById('timer-toggle-btn').innerText = 'Start';
+    }
+
+    /* TASK TRACKER */
+    function createNewTask() {
+      const inp = document.getElementById('task-input');
+      const val = inp.value.trim();
+      if (!val) return;
+
+      const li = document.createElement('li');
+      li.style = 'padding:.35rem 0;display:flex;justify-content:space-between;font-size:.85rem;border-bottom:1px solid #f1f5f9;align-items:center';
+      
+      const span = document.createElement('span');
+      span.textContent = val;
+      span.style.cursor = 'pointer';
+      span.addEventListener('click', () => span.classList.toggle('task-done'));
+
+      const delBtn = document.createElement('button');
+      delBtn.textContent = '✕';
+      delBtn.style = 'background:none;color:#ef4444;padding:0;font-size:0.9rem';
+      delBtn.addEventListener('click', () => li.remove());
+
+      li.appendChild(span);
+      li.appendChild(delBtn);
+      document.getElementById('task-list-ui').appendChild(li);
+      inp.value = '';
+    }
+
+    // Initialize values on startup
+    recalcGPA();
+    recalcSim();
+  </script>
+</body>
+</html>
