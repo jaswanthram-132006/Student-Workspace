@@ -4,7 +4,7 @@
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
   <title>Student Workspace & Study Engine</title>
   
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
   <style>
@@ -76,7 +76,7 @@
 
   <header>
     <h1>🎓 Student Workspace & AI Study Engine</h1>
-    <p>Contextual PDF Summaries, Mock Tests with Custom Question Counts & Formatted Document Exports</p>
+    <p>PDF Summaries, Custom Mock Quizzes & Academic Grade Trackers</p>
   </header>
 
   <div class="grid">
@@ -88,7 +88,7 @@
       </h2>
 
       <div class="drop-zone" onclick="document.getElementById('pdf-input').click()">
-        <span id="upload-label">📄 Click or Drop a <strong>PDF / Lecture Note TXT</strong> here</span>
+        <span id="upload-label">📄 Click to Upload <strong>PDF or TXT Lecture Notes</strong></span>
         <input type="file" id="pdf-input" accept=".pdf,.txt" style="display:none" onchange="handleFileUpload(event)">
       </div>
 
@@ -105,7 +105,7 @@
           <button onclick="generateStructuredNotes('definitions')" style="padding:5px 10px;font-size:0.8rem">📖 Key Definitions</button>
           <button onclick="generateStructuredNotes('cheat-sheet')" style="padding:5px 10px;font-size:0.8rem">⚡ Exam Revision Sheet</button>
         </div>
-        <div class="ai-output" id="summary-output">Upload a PDF above to extract clean definitions, bullet points, and core exam highlights.</div>
+        <div class="ai-output" id="summary-output">Upload a PDF or TXT file above to extract key notes and formulas.</div>
       </div>
 
       <div id="tab-quiz" class="ai-tab-content" style="display:none">
@@ -125,14 +125,14 @@
 
       <div id="tab-chat" class="ai-tab-content" style="display:none">
         <div class="row">
-          <input type="text" id="ai-query" placeholder="Type a concept, formula, or keyword to find context..." onkeydown="if(event.key==='Enter') searchInDoc()">
+          <input type="text" id="ai-query" placeholder="Type a concept, formula, or keyword..." onkeydown="if(event.key==='Enter') searchInDoc()">
           <button onclick="searchInDoc()" style="width:90px">Search</button>
         </div>
-        <div class="ai-output" id="chat-output">Search any term or formula from your uploaded lecture notes.</div>
+        <div class="ai-output" id="chat-output">Search any term or topic from your uploaded lecture notes.</div>
       </div>
 
       <div id="tab-export" class="ai-tab-content" style="display:none">
-        <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:0.5rem">Export structured revision sheets and Q&A flashcard tables:</p>
+        <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:0.5rem">Export structured study guides and Q&A flashcards:</p>
         <div class="export-grid">
           <button class="btn-export" onclick="exportFormattedWord()">📄 Word Doc (.doc)</button>
           <button class="btn-export" onclick="exportStructuredExcel()">📊 Excel Q&A Table (.csv)</button>
@@ -191,9 +191,6 @@
   </div>
 
   <script>
-    /* ================= AI STUDY ENGINE & PARSER ================= */
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-    
     let rawDocText = "";
     let cleanSentences = [];
     let extractedDefinitions = [];
@@ -215,24 +212,42 @@
       if (!file) return;
       loadedFileName = file.name.replace(/\.[^/.]+$/, "");
 
-      document.getElementById('upload-label').innerHTML = `⏳ Reading & Parsing <strong>${file.name}</strong>...`;
+      const label = document.getElementById('upload-label');
+      label.innerHTML = `⏳ Reading & Parsing <strong>${file.name}</strong>...`;
       
-      if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
+      if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+        if (typeof pdfjsLib === 'undefined') {
+          alert('PDF engine is loading from CDN. If you are offline, try uploading a .txt file instead.');
+          label.innerHTML = `❌ PDF engine not loaded. Check internet connection.`;
+          return;
+        }
+
         const fileReader = new FileReader();
         fileReader.onload = async function() {
-          const typedarray = new Uint8Array(this.result);
           try {
-            const pdf = await pdfjsLib.getDocument(typedarray).promise;
+            const typedarray = new Uint8Array(this.result);
+            const loadingTask = pdfjsLib.getDocument({ data: typedarray });
+            const pdf = await loadingTask.promise;
+            
             let fullText = "";
             for (let i = 1; i <= pdf.numPages; i++) {
               const page = await pdf.getPage(i);
               const textContent = await page.getTextContent();
               const pageText = textContent.items.map(item => item.str).join(' ');
-              fullText += pageText + "\n";
+              fullText += pageText + " ";
             }
+
+            if (!fullText.trim()) {
+              alert('This PDF seems to contain scanned images with no selectable digital text. Try a text-based PDF or a .txt note file.');
+              label.innerHTML = `⚠️ Scanned/Empty PDF detected: <strong>${file.name}</strong>`;
+              return;
+            }
+
             processExtractedText(file.name, fullText);
           } catch(err) {
-            alert('Error parsing PDF. Make sure the PDF contains readable text.');
+            console.error(err);
+            alert('Error parsing PDF. Please make sure the file is not corrupted or password protected.');
+            label.innerHTML = `❌ Error reading <strong>${file.name}</strong>`;
           }
         };
         fileReader.readAsArrayBuffer(file);
@@ -248,15 +263,17 @@
     function processExtractedText(filename, text) {
       rawDocText = text.replace(/\s+/g, ' ').trim();
       
-      // Clean sentence splitter
       cleanSentences = rawDocText.match(/[^.!?]+[.!?]+/g) || [rawDocText];
-      cleanSentences = cleanSentences.map(s => s.trim()).filter(s => s.length > 25);
+      cleanSentences = cleanSentences.map(s => s.trim()).filter(s => s.length > 20);
 
-      // Extract Definition Sentences (e.g., "X is defined as...", "X is known as...", "X refers to...")
-      const defRegex = /\b(is defined as|refers to|is known as|is called|denotes|represents|means|is the process of)\b/i;
+      if (cleanSentences.length === 0) {
+        alert('Could not extract readable sentences from this document.');
+        return;
+      }
+
+      const defRegex = /\b(is defined as|refers to|is known as|is called|denotes|represents|means|is the process of|formula|equation)\b/i;
       extractedDefinitions = cleanSentences.filter(s => defRegex.test(s));
 
-      // Extract subject-specific proper nouns and multi-word terms for authentic quiz distractors
       const termMatches = rawDocText.match(/\b[A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,})*\b/g) || [];
       const countMap = {};
       termMatches.forEach(t => {
@@ -266,17 +283,17 @@
       });
       extractedKeyNouns = Object.entries(countMap).sort((a,b) => b[1] - a[1]).map(e => e[0]);
 
-      document.getElementById('upload-label').innerHTML = `✅ Loaded: <strong>${filename}</strong> (${cleanSentences.length} key sentences parsed)`;
-      document.getElementById('doc-status').innerText = 'Ready for Study';
-      document.getElementById('doc-status').style.background = '#d1fae5';
-      document.getElementById('doc-status').style.color = '#065f46';
+      document.getElementById('upload-label').innerHTML = `✅ Loaded: <strong>${filename}</strong> (${cleanSentences.length} sentences)`;
+      const statusBadge = document.getElementById('doc-status');
+      statusBadge.innerText = 'Ready for Study';
+      statusBadge.style.background = '#d1fae5';
+      statusBadge.style.color = '#065f46';
       
       generateStructuredNotes('outline');
     }
 
-    /* Upgraded Contextual Summary Generator */
     function generateStructuredNotes(mode) {
-      if (!cleanSentences.length) { alert("Please upload a PDF or TXT lecture note first!"); return; }
+      if (!cleanSentences.length) { alert("Please upload a PDF or TXT file first!"); return; }
 
       let out = "";
       if (mode === 'definitions') {
@@ -290,20 +307,18 @@
       } else if (mode === 'cheat-sheet') {
         const keywords = extractedKeyNouns.slice(0, 12);
         out = `⚡ QUICK EXAM REVISION SHEET:\n\n` +
-          `📌 High Frequency Topics:\n• ` + keywords.join('\n• ') + `\n\n` +
+          `📌 High Frequency Topics:\n• ` + (keywords.length ? keywords.join('\n• ') : 'Key concepts extracted') + `\n\n` +
           `📌 Core Takeaways:\n• ` + cleanSentences.slice(0, 6).join('\n• ');
       } else {
-        // Outline mode: Group sentences in cohesive readable chunks
         const highlights = cleanSentences.slice(0, 8);
         out = `📑 STRUCTURED LECTURE SUMMARY:\n\n` + 
-          highlights.map((h, i) => `[Topic ${i+1}] ${h}`).join('\n\n');
+          highlights.map((h, i) => `[Point ${i+1}] ${h}`).join('\n\n');
       }
 
       activeExportContent = out;
       document.getElementById('summary-output').innerText = out;
     }
 
-    /* Upgraded Mock Quiz Generator with Custom Count & Genuine Distractors */
     function generateCustomQuiz() {
       if (!cleanSentences.length) { alert("Please upload a PDF first!"); return; }
       
@@ -311,18 +326,17 @@
       currentQuizTotal = count;
       currentQuizScore = 0;
       
-      // Prefer definition sentences, otherwise pick substantive sentences
       let pool = extractedDefinitions.length >= count ? [...extractedDefinitions] : [...cleanSentences];
       pool = pool.sort(() => 0.5 - Math.random()).slice(0, count);
 
       let quizHtml = "";
       pool.forEach((sentence, idx) => {
-        // Find candidate word to turn into blank
         const words = sentence.split(' ').filter(w => w.length > 4 && !/^(about|which|there|their|these|where|could|would|should|other|being)$/i.test(w));
+        if (!words.length) return;
+
         const targetWord = words[Math.floor(Math.random() * words.length)].replace(/[.,/#!$%^&*;:{}=\-_`~()]/g,"");
         const blankQuestion = sentence.replace(new RegExp(`\\b${targetWord}\\b`, 'i'), "________");
 
-        // Pick authentic distractors from the PDF's own noun pool
         let distractors = extractedKeyNouns.filter(n => n.toLowerCase() !== targetWord.toLowerCase()).slice(0, 3);
         while (distractors.length < 3) {
           distractors.push(["Parameter", "Magnitude", "Coefficient", "Threshold"][distractors.length]);
@@ -332,10 +346,10 @@
 
         quizHtml += `
           <div class="quiz-card" id="q-card-${idx}">
-            <p><strong>Q${idx+1}:</strong>${blankQuestion}</p>
+            <p><strong>Q${idx+1}:</strong> ${blankQuestion}</p>
             <div style="margin-top:8px">
               ${options.map(opt => `
-                <div class="quiz-opt" onclick="submitQuizAnswer(this, ${idx}, '${opt.replace(/'/g, "\\'") === targetWord.replace(/'/g, "\\'")}', '${targetWord.replace(/'/g, "\\'")}')">
+                <div class="quiz-opt" onclick="submitQuizAnswer(this, ${idx}, '${opt.replace(/'/g, "\\'") === targetWord.replace(/'/g, "\\'")}', '${targetWord.replace(/'/g, "\\"')}')">
                   ${opt}
                 </div>
               `).join('')}
@@ -351,7 +365,7 @@
 
     function submitQuizAnswer(selectedEl, qIndex, isCorrect, correctWord) {
       const card = document.getElementById(`q-card-${qIndex}`);
-      if (card.dataset.answered) return; // Prevent double clicking
+      if (card.dataset.answered) return;
       card.dataset.answered = "true";
 
       const allOpts = card.querySelectorAll('.quiz-opt');
@@ -369,7 +383,6 @@
       document.getElementById('score-val').innerText = `${currentQuizScore} / ${currentQuizTotal} (${Math.round((currentQuizScore/currentQuizTotal)*100)}%)`;
     }
 
-    /* Q&A / Concept Search */
     function searchInDoc() {
       const q = document.getElementById('ai-query').value.trim().toLowerCase();
       if (!q || !cleanSentences.length) return;
@@ -379,11 +392,10 @@
         document.getElementById('chat-output').innerHTML = `🔍 Found <strong>${matches.length}</strong> related sections:<br><br>` + 
           matches.slice(0, 5).map(m => `• ${m.trim()}`).join('<br><br>');
       } else {
-        document.getElementById('chat-output').innerHTML = `No exact matches found for "<strong>${q}</strong>". Try searching for individual key terms.`;
+        document.getElementById('chat-output').innerHTML = `No exact matches found for "<strong>${q}</strong>". Try another keyword.`;
       }
     }
 
-    /* ================= PROFESSIONAL DOCUMENT EXPORTERS ================= */
     function exportFormattedWord() {
       const content = activeExportContent || rawDocText.slice(0, 3000) || "Student Revision Notes";
       const formattedHTML = `
@@ -392,11 +404,10 @@
         <style>
           body { font-family: Calibri, Arial, sans-serif; line-height: 1.6; padding: 20px; }
           h1 { color: #4f46e5; border-bottom: 2px solid #4f46e5; padding-bottom: 6px; }
-          p { margin-bottom: 12px; }
         </style>
         </head>
         <body>
-          <h1>🎓 ${loadedFileName} - Study & Revision Sheet</h1>
+          <h1>🎓 ${loadedFileName} - Study Notes</h1>
           <p><em>Generated by Student Workspace AI Study Engine</em></p>
           <hr/>
           <pre style="font-family:Calibri,Arial,sans-serif;white-space:pre-wrap;">${content}</pre>
@@ -414,10 +425,7 @@
     function exportStructuredExcel() {
       let csv = "Category,Content,Status\n";
       csv += `"Document Name","${loadedFileName}","Processed"\n`;
-      csv += `"Key Sentences Count","${cleanSentences.length}","Parsed"\n`;
-      csv += `"Semester GPA","${document.getElementById('gpa-out').innerText}","Calculated"\n`;
-      csv += `"Target CGPA Req","${document.getElementById('sim-out').innerText}","Simulated"\n\n`;
-      
+      csv += `"Key Sentences Count","${cleanSentences.length}","Parsed"\n\n`;
       csv += `"Index","Extracted Concept / Definition","Subject Topic"\n`;
       cleanSentences.slice(0, 15).forEach((sent, idx) => {
         csv += `"${idx+1}","${sent.replace(/"/g, '""')}","${loadedFileName}"\n`;
@@ -434,27 +442,23 @@
     function exportStyledPDF() {
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
-      
       doc.setFont("helvetica", "bold");
       doc.setFontSize(16);
       doc.setTextColor(79, 70, 229);
       doc.text(`${loadedFileName} - Study Guide`, 14, 20);
-      
       doc.setFontSize(10);
       doc.setTextColor(100, 116, 139);
       doc.text(`Generated on ${new Date().toLocaleDateString()} | Student Workspace`, 14, 26);
       doc.line(14, 28, 196, 28);
-      
       doc.setFont("helvetica", "normal");
       doc.setTextColor(15, 23, 42);
       const textToPrint = activeExportContent || rawDocText.slice(0, 2500) || "No summary generated yet.";
       const splitText = doc.splitTextToSize(textToPrint, 180);
       doc.text(splitText, 14, 36);
-      
       doc.save(`${loadedFileName}_Summary.pdf`);
     }
 
-    /* ================= 10-POINT ACADEMIC ENGINE ================= */
+    /* Academic Calculators & Timer */
     function calcGPA(){
       let pts=0, crds=0;
       document.querySelectorAll('.gpa-r').forEach(r=>{
@@ -497,4 +501,10 @@
       if(!val) return;
       const li = document.createElement('li');
       li.style = 'padding:.3rem 0;display:flex;justify-content:space-between;font-size:.85rem;border-bottom:1px solid #f1f5f9';
-      li.innerHTML = `<span onclick="this.classList.toggle('task-done')" style="cursor:pointer">${val}</span><button onclick="this.parentElement.remove()" style="background:none;color:#ef
+      li.innerHTML = `<span onclick="this.classList.toggle('task-done')" style="cursor:pointer">${val}</span><button onclick="this.parentElement.remove()" style="background:none;color:#ef4444;padding:0">✕</button>`;
+      document.getElementById('t-list').appendChild(li);
+      document.getElementById('t-in').value = '';
+    }
+  </script>
+</body>
+</html>
