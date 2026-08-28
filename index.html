@@ -14,7 +14,7 @@
       --primary-light: #eef2ff;
       --bg: #f8fafc;
       --surface: #ffffff;
-      --border: #e2e8f0;
+      --border: #cbd5e1;
       --text: #0f172a;
       --text-muted: #64748b;
       --danger: #ef4444;
@@ -26,11 +26,11 @@
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
-    body { background: var(--bg); color: var(--text); padding: 1.2rem; max-width: 1050px; margin: auto; }
+    body { background: var(--bg); color: var(--text); padding: 1rem; max-width: 1050px; margin: auto; }
     
-    header { text-align: center; margin-bottom: 1.5rem; }
-    header h1 { font-size: 1.6rem; color: var(--primary); font-weight: 800; }
-    header p { font-size: 0.9rem; color: var(--text-muted); margin-top: 4px; }
+    header { text-align: center; margin-bottom: 1.2rem; }
+    header h1 { font-size: 1.5rem; color: var(--primary); font-weight: 800; }
+    header p { font-size: 0.85rem; color: var(--text-muted); margin-top: 3px; }
 
     .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.2rem; }
     .card { background: var(--surface); border-radius: 16px; padding: 1.2rem; box-shadow: 0 4px 12px rgba(0,0,0,0.04); border: 1px solid var(--border); display: flex; flex-direction: column; }
@@ -51,13 +51,17 @@
     .timer { font-size: 2.2rem; font-weight: 800; text-align: center; margin: 0.6rem 0; font-variant-numeric: tabular-nums; }
     .task-done { text-decoration: line-through; color: var(--text-muted); }
 
-    /* AI Studio Styles */
-    .ai-tabs { display: flex; gap: 0.4rem; margin-bottom: 0.8rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; overflow-x: auto; }
+    /* AI Studio Input & Tabs */
+    .input-mode-toggle { display: flex; gap: 6px; margin-bottom: 10px; }
+    .input-mode-btn { background: #f1f5f9; color: var(--text-muted); padding: 5px 12px; border-radius: 8px; font-size: 0.8rem; }
+    .input-mode-btn.active { background: var(--primary); color: #fff; }
+
+    .drop-zone { border: 2px dashed #94a3b8; border-radius: 12px; padding: 1.2rem; text-align: center; background: #f8fafc; cursor: pointer; margin-bottom: 0.8rem; }
+    .drop-zone:hover { border-color: var(--primary); background: var(--primary-light); }
+    
+    .ai-tabs { display: flex; gap: 0.4rem; margin: 0.8rem 0; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; overflow-x: auto; }
     .ai-tab-btn { background: transparent; color: var(--text-muted); border: 1px solid transparent; padding: 5px 12px; border-radius: 8px; font-size: 0.82rem; }
     .ai-tab-btn.active { background: var(--primary-light); color: var(--primary); border-color: var(--border); font-weight: 700; }
-    
-    .drop-zone { border: 2px dashed #cbd5e1; border-radius: 12px; padding: 1.2rem; text-align: center; background: #f8fafc; cursor: pointer; margin-bottom: 0.8rem; transition: 0.2s; }
-    .drop-zone:hover { border-color: var(--primary); background: var(--primary-light); }
     
     .ai-output { background: #f8fafc; border: 1px solid var(--border); border-radius: 12px; padding: 1rem; font-size: 0.88rem; line-height: 1.55; max-height: 300px; overflow-y: auto; white-space: pre-wrap; word-break: break-word; }
     
@@ -76,7 +80,7 @@
 
   <header>
     <h1>🎓 Student Workspace & AI Study Engine</h1>
-    <p>PDF Summaries, Custom Mock Quizzes & Academic Grade Trackers</p>
+    <p>Contextual Summaries, Custom Mock Quizzes, File Exporters & Grade Trackers</p>
   </header>
 
   <div class="grid">
@@ -84,12 +88,24 @@
     <div class="card card-span-2">
       <h2>
         <span>✨ Inbuilt AI Study & Document Engine</span>
-        <span id="doc-status" class="badge" style="background:#e0e7ff;color:#4338ca">No File Loaded</span>
+        <span id="doc-status" class="badge" style="background:#fee2e2;color:#dc2626">No Content Loaded</span>
       </h2>
 
-      <div class="drop-zone" onclick="document.getElementById('pdf-input').click()">
-        <span id="upload-label">📄 Click to Upload <strong>PDF or TXT Lecture Notes</strong></span>
-        <input type="file" id="pdf-input" accept=".pdf,.txt" style="display:none" onchange="handleFileUpload(event)">
+      <div class="input-mode-toggle">
+        <button class="input-mode-btn active" id="btn-mode-file" onclick="toggleInputMode('file')">📁 Upload PDF / TXT</button>
+        <button class="input-mode-btn" id="btn-mode-paste" onclick="toggleInputMode('paste')">📋 Paste Notes Directly</button>
+      </div>
+
+      <div id="section-file-upload">
+        <div class="drop-zone" onclick="document.getElementById('file-input').click()">
+          <span id="upload-label">📄 Click to select <strong>PDF or TXT file</strong></span>
+          <input type="file" id="file-input" accept=".pdf,.txt,.text,.md" style="display:none" onchange="handleFileInput(event)">
+        </div>
+      </div>
+
+      <div id="section-paste-input" style="display:none;margin-bottom:0.8rem">
+        <textarea id="direct-paste-text" placeholder="Paste your lecture notes, textbook chapters, or definitions here..." style="height:100px;margin-bottom:0.5rem"></textarea>
+        <button onclick="loadPastedText()" style="width:100%">⚡ Analyze Pasted Text</button>
       </div>
 
       <div class="ai-tabs">
@@ -105,7 +121,7 @@
           <button onclick="generateStructuredNotes('definitions')" style="padding:5px 10px;font-size:0.8rem">📖 Key Definitions</button>
           <button onclick="generateStructuredNotes('cheat-sheet')" style="padding:5px 10px;font-size:0.8rem">⚡ Exam Revision Sheet</button>
         </div>
-        <div class="ai-output" id="summary-output">Upload a PDF or TXT file above to extract key notes and formulas.</div>
+        <div class="ai-output" id="summary-output">Upload a document or paste text above to extract key notes and formulas.</div>
       </div>
 
       <div id="tab-quiz" class="ai-tab-content" style="display:none">
@@ -128,7 +144,7 @@
           <input type="text" id="ai-query" placeholder="Type a concept, formula, or keyword..." onkeydown="if(event.key==='Enter') searchInDoc()">
           <button onclick="searchInDoc()" style="width:90px">Search</button>
         </div>
-        <div class="ai-output" id="chat-output">Search any term or topic from your uploaded lecture notes.</div>
+        <div class="ai-output" id="chat-output">Search any term or topic from your uploaded material.</div>
       </div>
 
       <div id="tab-export" class="ai-tab-content" style="display:none">
@@ -200,6 +216,20 @@
     let currentQuizScore = 0;
     let loadedFileName = "Study_Material";
 
+    function toggleInputMode(mode) {
+      if (mode === 'file') {
+        document.getElementById('section-file-upload').style.display = 'block';
+        document.getElementById('section-paste-input').style.display = 'none';
+        document.getElementById('btn-mode-file').classList.add('active');
+        document.getElementById('btn-mode-paste').classList.remove('active');
+      } else {
+        document.getElementById('section-file-upload').style.display = 'none';
+        document.getElementById('section-paste-input').style.display = 'block';
+        document.getElementById('btn-mode-file').classList.remove('active');
+        document.getElementById('btn-mode-paste').classList.add('active');
+      }
+    }
+
     function switchAITab(tabId) {
       document.querySelectorAll('.ai-tab-btn').forEach(b => b.classList.remove('active'));
       document.querySelectorAll('.ai-tab-content').forEach(c => c.style.display = 'none');
@@ -207,51 +237,78 @@
       document.getElementById(tabId).style.display = 'block';
     }
 
-    async function handleFileUpload(e) {
+    function loadPastedText() {
+      const text = document.getElementById('direct-paste-text').value.trim();
+      if (!text) {
+        alert('Please paste some text into the box first!');
+        return;
+      }
+      loadedFileName = "Pasted_Notes";
+      processExtractedText("Pasted Notes", text);
+    }
+
+    // Bulletproof Fallback Raw Stream Extractor (Runs when PDF.js worker fails)
+    function extractTextFromPDFBytes(arrayBuffer) {
+      const bytes = new Uint8Array(arrayBuffer);
+      let text = "";
+      for (let i = 0; i < bytes.length; i++) {
+        // Look for readable ASCII characters
+        if (bytes[i] >= 32 && bytes[i] <= 126) {
+          text += String.fromCharCode(bytes[i]);
+        } else if (bytes[i] === 10 || bytes[i] === 13) {
+          text += " ";
+        }
+      }
+      // Extract streams between parentheses or standard text tokens
+      const matches = text.match(/\(([^()]+)\)\s*T[jJ]/g) || text.match(/[A-Za-z0-9,.\s]{20,}/g) || [];
+      return matches.map(m => m.replace(/[()]/g, '')).join(' ');
+    }
+
+    async function handleFileInput(e) {
       const file = e.target.files[0];
       if (!file) return;
       loadedFileName = file.name.replace(/\.[^/.]+$/, "");
 
       const label = document.getElementById('upload-label');
-      label.innerHTML = `⏳ Reading & Parsing <strong>${file.name}</strong>...`;
-      
-      if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
-        if (typeof pdfjsLib === 'undefined') {
-          alert('PDF engine is loading from CDN. If you are offline, try uploading a .txt file instead.');
-          label.innerHTML = `❌ PDF engine not loaded. Check internet connection.`;
-          return;
-        }
+      label.innerHTML = `⏳ Loading <strong>${file.name}</strong>...`;
 
+      if (file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf') {
         const fileReader = new FileReader();
         fileReader.onload = async function() {
+          let extractedText = "";
+          
+          // Method 1: Try PDF.js
           try {
-            const typedarray = new Uint8Array(this.result);
-            const loadingTask = pdfjsLib.getDocument({ data: typedarray });
-            const pdf = await loadingTask.promise;
-            
-            let fullText = "";
-            for (let i = 1; i <= pdf.numPages; i++) {
-              const page = await pdf.getPage(i);
-              const textContent = await page.getTextContent();
-              const pageText = textContent.items.map(item => item.str).join(' ');
-              fullText += pageText + " ";
+            if (typeof pdfjsLib !== 'undefined') {
+              pdfjsLib.GlobalWorkerOptions.workerSrc = ''; // Prevent worker CORS blocking
+              const typedarray = new Uint8Array(this.result);
+              const pdf = await pdfjsLib.getDocument({ data: typedarray, disableFontFace: true }).promise;
+              for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const content = await page.getTextContent();
+                extractedText += content.items.map(it => it.str).join(' ') + " ";
+              }
             }
-
-            if (!fullText.trim()) {
-              alert('This PDF seems to contain scanned images with no selectable digital text. Try a text-based PDF or a .txt note file.');
-              label.innerHTML = `⚠️ Scanned/Empty PDF detected: <strong>${file.name}</strong>`;
-              return;
-            }
-
-            processExtractedText(file.name, fullText);
           } catch(err) {
-            console.error(err);
-            alert('Error parsing PDF. Please make sure the file is not corrupted or password protected.');
-            label.innerHTML = `❌ Error reading <strong>${file.name}</strong>`;
+            console.warn("PDF.js worker blocked locally. Falling back to native stream reader.", err);
           }
+
+          // Method 2: Fallback to Raw Stream Reader
+          if (!extractedText.trim()) {
+            extractedText = extractTextFromPDFBytes(this.result);
+          }
+
+          if (!extractedText.trim()) {
+            alert('Could not extract text. This might be a photo/scanned PDF. Try pasting the text using the "Paste Notes Directly" tab.');
+            label.innerHTML = `⚠️ No text detected in <strong>${file.name}</strong>`;
+            return;
+          }
+
+          processExtractedText(file.name, extractedText);
         };
         fileReader.readAsArrayBuffer(file);
       } else {
+        // Plain text / Markdown
         const reader = new FileReader();
         reader.onload = function(evt) {
           processExtractedText(file.name, evt.target.result);
@@ -267,8 +324,7 @@
       cleanSentences = cleanSentences.map(s => s.trim()).filter(s => s.length > 20);
 
       if (cleanSentences.length === 0) {
-        alert('Could not extract readable sentences from this document.');
-        return;
+        cleanSentences = [rawDocText.slice(0, 300)];
       }
 
       const defRegex = /\b(is defined as|refers to|is known as|is called|denotes|represents|means|is the process of|formula|equation)\b/i;
@@ -283,7 +339,7 @@
       });
       extractedKeyNouns = Object.entries(countMap).sort((a,b) => b[1] - a[1]).map(e => e[0]);
 
-      document.getElementById('upload-label').innerHTML = `✅ Loaded: <strong>${filename}</strong> (${cleanSentences.length} sentences)`;
+      document.getElementById('upload-label').innerHTML = `✅ Active: <strong>${filename}</strong> (${cleanSentences.length} sentences)`;
       const statusBadge = document.getElementById('doc-status');
       statusBadge.innerText = 'Ready for Study';
       statusBadge.style.background = '#d1fae5';
@@ -293,7 +349,7 @@
     }
 
     function generateStructuredNotes(mode) {
-      if (!cleanSentences.length) { alert("Please upload a PDF or TXT file first!"); return; }
+      if (!cleanSentences.length) { alert("Please upload or paste your study notes first!"); return; }
 
       let out = "";
       if (mode === 'definitions') {
@@ -307,12 +363,12 @@
       } else if (mode === 'cheat-sheet') {
         const keywords = extractedKeyNouns.slice(0, 12);
         out = `⚡ QUICK EXAM REVISION SHEET:\n\n` +
-          `📌 High Frequency Topics:\n• ` + (keywords.length ? keywords.join('\n• ') : 'Key concepts extracted') + `\n\n` +
+          `📌 High Frequency Topics:\n• ` + (keywords.length ? keywords.join('\n• ') : 'Key topics identified') + `\n\n` +
           `📌 Core Takeaways:\n• ` + cleanSentences.slice(0, 6).join('\n• ');
       } else {
         const highlights = cleanSentences.slice(0, 8);
         out = `📑 STRUCTURED LECTURE SUMMARY:\n\n` + 
-          highlights.map((h, i) => `[Point ${i+1}] ${h}`).join('\n\n');
+          highlights.map((h, i) => `[Topic ${i+1}] ${h}`).join('\n\n');
       }
 
       activeExportContent = out;
@@ -320,7 +376,7 @@
     }
 
     function generateCustomQuiz() {
-      if (!cleanSentences.length) { alert("Please upload a PDF first!"); return; }
+      if (!cleanSentences.length) { alert("Please upload or paste your study notes first!"); return; }
       
       const count = parseInt(document.getElementById('quiz-count').value);
       currentQuizTotal = count;
@@ -392,7 +448,7 @@
         document.getElementById('chat-output').innerHTML = `🔍 Found <strong>${matches.length}</strong> related sections:<br><br>` + 
           matches.slice(0, 5).map(m => `• ${m.trim()}`).join('<br><br>');
       } else {
-        document.getElementById('chat-output').innerHTML = `No exact matches found for "<strong>${q}</strong>". Try another keyword.`;
+        document.getElementById('chat-output').innerHTML = `No exact matches found for "<strong>${q}</strong>".`;
       }
     }
 
@@ -442,14 +498,17 @@
     function exportStyledPDF() {
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
+      
       doc.setFont("helvetica", "bold");
       doc.setFontSize(16);
       doc.setTextColor(79, 70, 229);
       doc.text(`${loadedFileName} - Study Guide`, 14, 20);
+      
       doc.setFontSize(10);
       doc.setTextColor(100, 116, 139);
       doc.text(`Generated on ${new Date().toLocaleDateString()} | Student Workspace`, 14, 26);
       doc.line(14, 28, 196, 28);
+      
       doc.setFont("helvetica", "normal");
       doc.setTextColor(15, 23, 42);
       const textToPrint = activeExportContent || rawDocText.slice(0, 2500) || "No summary generated yet.";
@@ -458,7 +517,7 @@
       doc.save(`${loadedFileName}_Summary.pdf`);
     }
 
-    /* Academic Calculators & Timer */
+    /* 10-Point Academic Calculators & Timer */
     function calcGPA(){
       let pts=0, crds=0;
       document.querySelectorAll('.gpa-r').forEach(r=>{
